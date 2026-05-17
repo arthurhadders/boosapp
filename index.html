@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BoosApp — praat met de avatar</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="BoosApp">
+  <meta name="mobile-web-app-capable" content="yes">
   <style>
     :root {
       --bg: #f3f5fa;
@@ -40,11 +47,13 @@
       padding: 16px 20px; max-width: 720px; margin: 0 auto; width: 100%;
     }
     h1 { font-size: 1.4rem; margin: 0; letter-spacing: -.5px; }
+    .header-actions { display: flex; gap: 8px; }
     .theme-btn {
       background: var(--panel); border: 1px solid var(--soft);
       color: var(--text); border-radius: 999px; padding: 8px 14px;
       cursor: pointer; font-size: .9rem; box-shadow: var(--shadow);
     }
+    .icon-only { padding: 8px 12px; }
     main {
       flex: 1; max-width: 720px; margin: 0 auto; width: 100%;
       padding: 0 20px 32px;
@@ -133,6 +142,17 @@
     }
     .label { font-size: .82rem; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
 
+    /* voorbeelden bij lege staat */
+    .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .examples.hidden { display: none; }
+    .example {
+      background: var(--soft); color: var(--text);
+      border: 1px dashed var(--muted); border-radius: 999px;
+      padding: 6px 12px; font-size: .85rem;
+      cursor: pointer; transition: opacity .2s, transform .1s;
+    }
+    .example:hover { opacity: .85; transform: translateY(-1px); }
+
     /* instellingen */
     .settings-toggle {
       background: var(--soft); color: var(--text); border: none;
@@ -187,7 +207,10 @@
 <body data-theme="light" data-mode="lief">
   <header>
     <h1>🫧 BoosApp</h1>
-    <button class="theme-btn" id="themeBtn">🌙 Donker</button>
+    <div class="header-actions">
+      <button class="theme-btn icon-only" id="musicBtn" title="Muziek aan/uit">🔇</button>
+      <button class="theme-btn" id="themeBtn">🌙 Donker</button>
+    </div>
   </header>
 
   <main>
@@ -204,6 +227,7 @@
 
     <div class="card">
       <div class="response empty" id="response" data-i18n="response_empty">Typ iets of druk op de microfoon...</div>
+      <div class="examples" id="examples"></div>
     </div>
 
     <div class="card">
@@ -621,6 +645,26 @@
 
     const state = { mode: "lief", voice: "vrouw", language: "nl", theme: "light", voices: [] };
 
+    function loadPrefs() {
+      const m = localStorage.getItem("boosapp_mode");
+      const v = localStorage.getItem("boosapp_voice");
+      const l = localStorage.getItem("boosapp_language");
+      const t = localStorage.getItem("boosapp_theme");
+      if (m) state.mode = m;
+      if (v) state.voice = v;
+      if (l) state.language = l;
+      if (t) state.theme = t;
+    }
+    function savePrefs() {
+      localStorage.setItem("boosapp_mode", state.mode);
+      localStorage.setItem("boosapp_voice", state.voice);
+      localStorage.setItem("boosapp_language", state.language);
+      localStorage.setItem("boosapp_theme", state.theme);
+    }
+    loadPrefs();
+    document.body.dataset.theme = state.theme;
+    document.body.dataset.mode = state.mode;
+
     const LANG_CODES = { nl: "nl-NL", en: "en-US", de: "de-DE", fr: "fr-FR" };
     const LANG_NAMES = { nl: "Dutch", en: "English", de: "German", fr: "French" };
     const langCode = (l) => LANG_CODES[l] || "nl-NL";
@@ -647,7 +691,9 @@
         model_haiku: "Haiku 4.5 — snel & goedkoop",
         model_sonnet: "Sonnet 4.6 — slimmer, iets duurder",
         btn_clear: "🗑️ Wis gesprek-geheugen",
-        err_api: "Oeps, kon Claude niet bereiken. "
+        err_api: "Oeps, kon Claude niet bereiken. ",
+        examples: ["Ik ben moe", "Ik moet aan een taak beginnen", "Ik voel me lullig"],
+        music_on_title: "Muziek uitzetten", music_off_title: "Muziek aanzetten"
       },
       en: {
         theme_dark: "🌙 Dark", theme_light: "☀️ Light",
@@ -669,7 +715,9 @@
         model_haiku: "Haiku 4.5 — fast & cheap",
         model_sonnet: "Sonnet 4.6 — smarter, a bit pricier",
         btn_clear: "🗑️ Clear conversation memory",
-        err_api: "Oops, couldn't reach Claude. "
+        err_api: "Oops, couldn't reach Claude. ",
+        examples: ["I'm tired", "I need to start a task", "I'm feeling down"],
+        music_on_title: "Turn music off", music_off_title: "Turn music on"
       },
       de: {
         theme_dark: "🌙 Dunkel", theme_light: "☀️ Hell",
@@ -691,7 +739,9 @@
         model_haiku: "Haiku 4.5 — schnell & günstig",
         model_sonnet: "Sonnet 4.6 — schlauer, etwas teurer",
         btn_clear: "🗑️ Gesprächsverlauf löschen",
-        err_api: "Hoppla, Claude nicht erreichbar. "
+        err_api: "Hoppla, Claude nicht erreichbar. ",
+        examples: ["Ich bin müde", "Ich muss eine Aufgabe anfangen", "Mir geht's mies"],
+        music_on_title: "Musik ausschalten", music_off_title: "Musik einschalten"
       },
       fr: {
         theme_dark: "🌙 Sombre", theme_light: "☀️ Clair",
@@ -713,7 +763,9 @@
         model_haiku: "Haiku 4.5 — rapide et bon marché",
         model_sonnet: "Sonnet 4.6 — plus malin, un peu plus cher",
         btn_clear: "🗑️ Effacer la mémoire",
-        err_api: "Oups, impossible d'atteindre Claude. "
+        err_api: "Oups, impossible d'atteindre Claude. ",
+        examples: ["Je suis fatigué", "Je dois commencer un devoir", "Je me sens mal"],
+        music_on_title: "Désactiver la musique", music_off_title: "Activer la musique"
       }
     };
     let T = ui.nl;
@@ -733,9 +785,34 @@
       if (mb) mb.title = mb.disabled ? T.mic_disabled_title : T.mic_title;
       const tb = document.getElementById("themeBtn");
       if (tb) tb.textContent = (state.theme === "light") ? T.theme_dark : T.theme_light;
+      const musb = document.getElementById("musicBtn");
+      if (musb) musb.title = musicOn ? T.music_on_title : T.music_off_title;
       const resp = document.getElementById("response");
       if (resp && resp.classList.contains("empty")) resp.textContent = T.response_empty;
       document.documentElement.lang = state.language;
+      renderExamples();
+    }
+
+    function renderExamples() {
+      const ex = document.getElementById("examples");
+      const resp = document.getElementById("response");
+      if (!ex || !resp) return;
+      if (!resp.classList.contains("empty")) {
+        ex.classList.add("hidden");
+        return;
+      }
+      ex.classList.remove("hidden");
+      ex.innerHTML = "";
+      (T.examples || []).forEach(text => {
+        const b = document.createElement("button");
+        b.className = "example";
+        b.textContent = text;
+        b.addEventListener("click", () => {
+          document.getElementById("userInput").value = "";
+          reply(text);
+        });
+        ex.appendChild(b);
+      });
     }
 
     const $ = (id) => document.getElementById(id);
@@ -747,6 +824,7 @@
       state.theme = state.theme === "light" ? "dark" : "light";
       document.body.dataset.theme = state.theme;
       $("themeBtn").textContent = state.theme === "light" ? T.theme_dark : T.theme_light;
+      savePrefs();
     });
 
     // Knoppen-rijtjes (mode / stem)
@@ -764,9 +842,19 @@
       state.mode = m;
       document.body.dataset.mode = m;
       updateFace();
+      savePrefs();
     });
-    setupChips("voiceChips", "voice", (v) => { state.voice = v; });
-    setupChips("languageChips", "language", (l) => { state.language = l; applyUI(); });
+    setupChips("voiceChips", "voice", (v) => { state.voice = v; savePrefs(); });
+    setupChips("languageChips", "language", (l) => { state.language = l; applyUI(); savePrefs(); });
+
+    function syncActiveChip(containerId, attr, value) {
+      document.querySelectorAll("#" + containerId + " .chip").forEach(c => {
+        c.classList.toggle("active", c.dataset[attr] === value);
+      });
+    }
+    syncActiveChip("modeChips", "mode", state.mode);
+    syncActiveChip("voiceChips", "voice", state.voice);
+    syncActiveChip("languageChips", "language", state.language);
 
     // Gezichtsuitdrukking per mode
     function updateFace() {
@@ -875,6 +963,7 @@
       responseEl.classList.remove("empty", "pop");
       void responseEl.offsetWidth;
       responseEl.classList.add("pop");
+      renderExamples();
     }
 
     function randomReply() {
@@ -1055,8 +1144,88 @@
       return text;
     }
 
-    // Initiele UI-vertaling toepassen (na mic-setup zodat de juiste mic-title gekozen wordt)
+    // === Achtergrondmuziek (Web Audio synth, geen bestanden nodig) ===
+    let musicOn = localStorage.getItem("boosapp_music") === "1";
+    let audioCtx = null;
+    let musicMaster = null;
+    let musicNodes = [];
+
+    function ensureAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }
+
+    function startMusic() {
+      if (musicNodes.length) return;
+      const ctx = ensureAudio();
+      musicMaster = ctx.createGain();
+      musicMaster.gain.value = 0;
+      musicMaster.connect(ctx.destination);
+      musicMaster.gain.linearRampToValueAtTime(0.10, ctx.currentTime + 2.5);
+      // Cmaj9 spread — kalmerend akkoord met zachte LFO's
+      const freqs = [130.81, 196.00, 261.63, 329.63, 392.00, 587.33];
+      freqs.forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = i < 2 ? "triangle" : "sine";
+        osc.frequency.value = f;
+        const g = ctx.createGain();
+        const base = 0.5 / freqs.length;
+        g.gain.value = base;
+        const lfo = ctx.createOscillator();
+        lfo.frequency.value = 0.04 + i * 0.013;
+        const lfoGain = ctx.createGain();
+        lfoGain.gain.value = base * 0.5;
+        lfo.connect(lfoGain).connect(g.gain);
+        osc.connect(g).connect(musicMaster);
+        osc.start();
+        lfo.start();
+        musicNodes.push(osc, lfo);
+      });
+    }
+
+    function stopMusic() {
+      if (!musicMaster || !audioCtx) return;
+      const ctx = audioCtx;
+      musicMaster.gain.cancelScheduledValues(ctx.currentTime);
+      musicMaster.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+      const nodes = musicNodes.slice();
+      const master = musicMaster;
+      musicNodes = [];
+      musicMaster = null;
+      setTimeout(() => {
+        nodes.forEach(n => { try { n.stop(); } catch {} });
+        try { master.disconnect(); } catch {}
+      }, 900);
+    }
+
+    function updateMusicBtn() {
+      const mb = $("musicBtn");
+      mb.textContent = musicOn ? "🔊" : "🔇";
+      mb.title = musicOn ? T.music_on_title : T.music_off_title;
+      mb.setAttribute("aria-pressed", musicOn ? "true" : "false");
+    }
+
+    $("musicBtn").addEventListener("click", () => {
+      musicOn = !musicOn;
+      localStorage.setItem("boosapp_music", musicOn ? "1" : "0");
+      if (musicOn) startMusic(); else stopMusic();
+      updateMusicBtn();
+    });
+
+    // Browsers blokkeren AudioContext zonder user-gesture, dus bij herladen
+    // wachten we op de eerste klik ergens op de pagina om muziek te starten.
+    if (musicOn) {
+      const starter = () => {
+        if (musicOn && !musicNodes.length) startMusic();
+        document.removeEventListener("click", starter);
+      };
+      document.addEventListener("click", starter);
+    }
+
+    // Initiele UI-vertaling toepassen (na mic + muziek-setup zodat alles juiste taal krijgt)
     applyUI();
+    updateMusicBtn();
   </script>
 </body>
 </html>
