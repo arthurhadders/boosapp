@@ -672,6 +672,168 @@
      }
     };
 
+    // Sleutelwoorden per thema per taal. Kort = exact match, lang = prefix match.
+    const themes = {
+      geld: {
+        nl: ["geld","betalen","betaald","betaal","duur","cent","centen","euro","rekening","kost","kostte","schuld","factuur"],
+        en: ["money","pay","paid","paying","expensive","cent","cents","euro","dollar","cost","bill","debt","fee"],
+        de: ["geld","bezahl","bezahlt","teuer","cent","euro","kosten","rechnung","miete","schulden"],
+        fr: ["argent","payer","paye","payé","cher","centime","euro","coût","coûte","facture","loyer"]
+      },
+      moe: {
+        nl: ["moe","vermoeid","slapen","slaap","kapot","uitgeput"],
+        en: ["tired","sleepy","sleep","exhausted","wiped"],
+        de: ["müde","schlafen","schlaf","erschöpft","kaputt"],
+        fr: ["fatigué","fatiguée","sommeil","dormir","épuisé","épuisée","crevé"]
+      },
+      school_werk: {
+        nl: ["school","werk","huiswerk","opdracht","toets","tentamen","deadline","baas","collega","studie","leren","werken","werkt"],
+        en: ["school","work","homework","assignment","test","exam","deadline","boss","colleague","office","study","studying","working"],
+        de: ["schule","arbeit","hausaufgabe","aufgabe","prüfung","deadline","chef","kollege","büro","studium","arbeiten"],
+        fr: ["école","travail","devoir","examen","deadline","patron","collègue","bureau","étude","travailler"]
+      },
+      verdriet: {
+        nl: ["verdrietig","verdriet","huilen","huil","eenzaam","lullig","klote","rot"],
+        en: ["sad","crying","cry","lonely","depressed","miserable","down"],
+        de: ["traurig","weinen","weine","einsam","elend","mies"],
+        fr: ["triste","pleurer","pleure","seul","seule","déprimé","déprimée"]
+      },
+      boos_emotion: {
+        nl: ["boos","kwaad","woedend","pissig","geirriteerd","geërgerd"],
+        en: ["angry","mad","furious","pissed","irritated","annoyed"],
+        de: ["wütend","sauer","verärgert","stinkig"],
+        fr: ["fâché","fâchée","énervé","énervée","furieux","furieuse"]
+      }
+    };
+
+    // Thematische antwoorden per taal × thema × mode (valt terug op generieke responses bij geen match)
+    const themedResponses = {
+      nl: {
+        geld: {
+          lief: ["Geld komt en gaat, jij bent meer dan dat.","Het is maar geld, adem rustig in en uit."],
+          boos: ["Voor je geld opkomen, ga halen wat van jou is!","Niet over je heen laten lopen om geld — terugvragen!","Iedere cent telt, sta voor wat van jou is!"],
+          schelden: ["Sukkel, gewoon terugvragen die centen!","Mafkees, ga je geld halen, hop!","Pannenkoek, niet zeuren — ophalen die handel!"]
+        },
+        moe: {
+          lief: ["Even rusten mag, niet alles hoeft vandaag.","Sluit je ogen even, ik wacht."],
+          boos: ["Te moe? Niet kennen geven, doorzetten!","Wakker blijven, niet inzakken nu!","Een minuut pauze en dan weer aan!"],
+          schelden: ["Slome duikelaar, wakker worden!","Sloompie, niet zo lui doen!","Sukkel, ga slapen of doorpakken!"]
+        },
+        school_werk: {
+          lief: ["Eén taak tegelijk, dat is genoeg.","Het hoeft niet perfect te zijn, gewoon beginnen."],
+          boos: ["Aan de slag met die taak, nu!","Geen excuses meer, gewoon doen!","Schop jezelf erin, kom op!"],
+          schelden: ["Sukkel, begin nu eens met die opdracht!","Mafkees, niet uitstellen, hop hop!","Sloompie, aan de slag met dat werk!"]
+        },
+        verdriet: {
+          lief: ["Voel maar wat je voelt, dat mag.","Je hoeft niet sterk te zijn, ik luister wel."],
+          boos: ["Janken mag, maar daarna weer overeind!","Niet te lang blijven hangen, schouders eronder!","Voelen en doorademen, kom op!"],
+          schelden: ["Sufferd, niet zo zielig doen!","Mafketel, hou eens op met treuren!","Sukkel, kom uit dat hoekje!"]
+        },
+        boos_emotion: {
+          lief: ["Het is oké om boos te zijn — vertel maar.","Boos? Adem rustig, ik luister."],
+          boos: ["Boos? Mooi, gebruik die energie!","Goed zo, kom in beweging dan!","Boosheid is brandstof — gebruiken!"],
+          schelden: ["Boos? Welkom in de club, sukkel!","Mafkees, gooi het er maar uit!","Pannenkoek met saus, doe er wat mee!"]
+        }
+      },
+      en: {
+        geld: {
+          lief: ["Money comes and goes, you're worth more.","It's just money, breathe in and out."],
+          boos: ["Stand up for your money, go get it!","Don't let them walk over you — ask it back!","Every cent counts, fight for what's yours!"],
+          schelden: ["Doofus, just go ask it back!","Numpty, go collect your cents!","Pancake, stop whining and go!"]
+        },
+        moe: {
+          lief: ["Rest is allowed, not everything has to happen today.","Close your eyes for a bit, I'll wait."],
+          boos: ["Tired? Don't give in, push through!","Stay awake, don't slump now!","One minute of rest, then back at it!"],
+          schelden: ["Slowpoke, wake up!","Sleepyhead, don't be lazy!","Doofus, sleep or push through!"]
+        },
+        school_werk: {
+          lief: ["One task at a time, that's enough.","It doesn't have to be perfect, just start."],
+          boos: ["Get on that task, now!","No more excuses, just do it!","Kick yourself into gear!"],
+          schelden: ["Doofus, start that assignment now!","Numpty, no more procrastinating!","Slowpoke, get to that work!"]
+        },
+        verdriet: {
+          lief: ["Feel what you feel, it's allowed.","You don't have to be strong, I'm listening."],
+          boos: ["Cry it out, then stand back up!","Don't dwell too long, shoulders back!","Feel it and breathe through!"],
+          schelden: ["Goofball, don't be so pitiful!","Numpty, stop moping!","Doofus, come out of that corner!"]
+        },
+        boos_emotion: {
+          lief: ["It's okay to be angry — tell me about it.","Angry? Breathe slowly, I'm listening."],
+          boos: ["Angry? Good, use that energy!","Right, now get moving!","Anger is fuel — use it!"],
+          schelden: ["Angry? Welcome to the club, doofus!","Numpty, just let it out!","Pancake, do something with it!"]
+        }
+      },
+      de: {
+        geld: {
+          lief: ["Geld kommt und geht, du bist mehr wert.","Es ist nur Geld, atme ruhig."],
+          boos: ["Steh für dein Geld ein, hol's dir!","Lass dir wegen Geld nichts gefallen — fordere es zurück!","Jeder Cent zählt, kämpf für deins!"],
+          schelden: ["Trottel, frag's einfach zurück!","Dödel, hol deine Cent!","Pfannkuchen, nicht jammern, hol's!"]
+        },
+        moe: {
+          lief: ["Ruhe ist erlaubt, nicht alles muss heute sein.","Schließ kurz die Augen, ich warte."],
+          boos: ["Müde? Nicht aufgeben, durchhalten!","Wach bleiben, nicht einknicken jetzt!","Eine Minute Pause, dann weiter!"],
+          schelden: ["Lahme Ente, aufwachen!","Schlafmütze, sei nicht so faul!","Trottel, schlaf oder weiter!"]
+        },
+        school_werk: {
+          lief: ["Eine Aufgabe nach der anderen, das reicht.","Es muss nicht perfekt sein, fang einfach an."],
+          boos: ["Ran an die Aufgabe, jetzt!","Keine Ausreden mehr, einfach machen!","Tritt dich selbst in den Hintern!"],
+          schelden: ["Trottel, fang jetzt mit der Aufgabe an!","Tölpel, hör auf zu trödeln!","Schlafmütze, an die Arbeit!"]
+        },
+        verdriet: {
+          lief: ["Fühl, was du fühlst, das ist okay.","Du musst nicht stark sein, ich höre zu."],
+          boos: ["Wein dich aus und steh wieder auf!","Verweile nicht zu lange, Schultern zurück!","Fühlen und durchatmen!"],
+          schelden: ["Tölpel, sei nicht so wehleidig!","Dummerchen, hör auf zu trauern!","Trottel, raus aus der Ecke!"]
+        },
+        boos_emotion: {
+          lief: ["Es ist okay, wütend zu sein — erzähl.","Wütend? Atme ruhig, ich höre zu."],
+          boos: ["Wütend? Gut, nutz die Energie!","Genau, in Bewegung kommen!","Wut ist Treibstoff, nutzen!"],
+          schelden: ["Wütend? Willkommen im Club, Trottel!","Dödel, lass es raus!","Pfannkuchen, mach was draus!"]
+        }
+      },
+      fr: {
+        geld: {
+          lief: ["L'argent va et vient, tu vaux plus.","Ce n'est que de l'argent, respire."],
+          boos: ["Défends ton argent, va le chercher!","Ne te laisse pas faire, redemande-le!","Chaque centime compte — bats-toi pour ce qui est à toi!"],
+          schelden: ["Nigaud, va simplement redemander!","Andouille, va chercher tes centimes!","Patate, arrête de pleurnicher, va!"]
+        },
+        moe: {
+          lief: ["Le repos est permis, tout ne doit pas se faire aujourd'hui.","Ferme un peu les yeux, j'attends."],
+          boos: ["Fatigué? Ne lâche pas, persévère!","Reste éveillé, ne flanche pas!","Une minute de pause, puis on reprend!"],
+          schelden: ["Lambin, réveille-toi!","Marmotte, pas si paresseux!","Andouille, dors ou continue!"]
+        },
+        school_werk: {
+          lief: ["Une tâche à la fois, c'est suffisant.","Pas besoin d'être parfait, commence simplement."],
+          boos: ["Au boulot avec cette tâche, maintenant!","Plus d'excuses, fais-le!","Botte-toi les fesses!"],
+          schelden: ["Nigaud, commence ce devoir maintenant!","Andouille, arrête de procrastiner!","Lambin, au travail!"]
+        },
+        verdriet: {
+          lief: ["Ressens ce que tu ressens, c'est permis.","Tu n'as pas à être fort, je t'écoute."],
+          boos: ["Pleure un coup, puis relève-toi!","Ne t'attarde pas trop, épaules en arrière!","Ressens et respire!"],
+          schelden: ["Nigaud, ne sois pas si pitoyable!","Andouille, arrête de te morfondre!","Cornichon, sors de ce coin!"]
+        },
+        boos_emotion: {
+          lief: ["C'est okay d'être fâché — raconte.","Fâché? Respire doucement, j'écoute."],
+          boos: ["Fâché? Bien, utilise cette énergie!","Exact, maintenant bouge!","La colère est du carburant, utilise-la!"],
+          schelden: ["Fâché? Bienvenue au club, nigaud!","Andouille, sors-le!","Patate, fais-en quelque chose!"]
+        }
+      }
+    };
+
+    function detectTheme(text, lang) {
+      if (!text) return null;
+      const tokens = text.toLowerCase().split(/[\s.,!?;:'"„""()\-—]+/).filter(Boolean);
+      for (const [name, langs] of Object.entries(themes)) {
+        const kws = langs[lang] || langs.en || langs.nl || [];
+        for (const k of kws) {
+          if (k.length <= 3) {
+            if (tokens.includes(k)) return name;
+          } else {
+            if (tokens.some(t => t.startsWith(k))) return name;
+          }
+        }
+      }
+      return null;
+    }
+
     const state = { mode: "lief", voice: "vrouw", language: "nl", theme: "light", voices: [] };
 
     function loadPrefs() {
@@ -1027,9 +1189,19 @@
       syncEmptyState();
     }
 
-    function randomReply() {
-      const langSet = responses[state.language] || responses.nl;
-      const arr = langSet[state.mode] || langSet.lief;
+    function randomReply(userText) {
+      const lang = state.language;
+      const mode = state.mode;
+      const theme = detectTheme(userText || "", lang);
+      if (theme) {
+        const langTheme = (themedResponses[lang] || {})[theme];
+        if (langTheme && langTheme[mode] && langTheme[mode].length) {
+          const arr = langTheme[mode];
+          return arr[Math.floor(Math.random() * arr.length)];
+        }
+      }
+      const langSet = responses[lang] || responses.nl;
+      const arr = langSet[mode] || langSet.lief;
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
@@ -1056,7 +1228,7 @@
           addMessage("assistant", T.err_api + e.message);
         }
       } else {
-        const text = randomReply();
+        const text = randomReply(userText);
         addMessage("assistant", text);
         history.push({ role: "assistant", content: text });
         saveHistory();
