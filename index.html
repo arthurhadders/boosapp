@@ -1114,7 +1114,9 @@
       settings.aiMode = localStorage.getItem("boosapp_aimode") === "1";
       settings.apiKey = localStorage.getItem("boosapp_apikey") || "";
       settings.model  = localStorage.getItem("boosapp_model")  || settings.model;
-      try { history = JSON.parse(localStorage.getItem("boosapp_history") || "[]"); }
+      // Gesprek alleen binnen huidige browser-sessie: weg zodra de tab sluit.
+      localStorage.removeItem("boosapp_history"); // oude persistente data opruimen
+      try { history = JSON.parse(sessionStorage.getItem("boosapp_history") || "[]"); }
       catch { history = []; }
     }
     function saveSettings() {
@@ -1123,7 +1125,7 @@
       localStorage.setItem("boosapp_model",  settings.model);
     }
     function saveHistory() {
-      localStorage.setItem("boosapp_history", JSON.stringify(history.slice(-20)));
+      sessionStorage.setItem("boosapp_history", JSON.stringify(history.slice(-20)));
     }
     loadSettings();
 
