@@ -70,16 +70,12 @@
     .brow { stroke: #1a1a1f; stroke-width: 5; fill: none; stroke-linecap: round; transition: all .3s; }
     .mouth {
       fill: #5a2a2a;
-      transform-box: fill-box;
-      transform-origin: center;
-      transition: rx .3s, ry .3s;
+      transition: ry .08s ease-out, rx .3s;
     }
-    .avatar.speaking .mouth {
-      animation: mouthMove .22s ease-in-out infinite alternate;
-    }
-    @keyframes mouthMove {
-      from { transform: scaleY(0.3); }
-      to   { transform: scaleY(1.4); }
+    .avatar.speaking { animation: bob 1.6s ease-in-out infinite; }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-2px); }
     }
 
     /* response bubble */
@@ -207,77 +203,109 @@
     </div>
 
     <div class="card">
-      <div class="response empty" id="response">Typ iets of druk op de microfoon...</div>
+      <div class="response empty" id="response" data-i18n="response_empty">Typ iets of druk op de microfoon...</div>
     </div>
 
     <div class="card">
       <div class="input-row">
         <input type="text" id="userInput" placeholder="Wat wil je zeggen?" autocomplete="off" />
         <button class="btn icon mic" id="micBtn" title="Praat tegen de app">🎤</button>
-        <button class="btn" id="sendBtn">Stuur</button>
+        <button class="btn" id="sendBtn" data-i18n="btn_send">Stuur</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="label">Mode</div>
+      <div class="label" data-i18n="label_language">Taal</div>
+      <div class="chips" id="languageChips">
+        <button class="chip active" data-language="nl">🇳🇱 NL</button>
+        <button class="chip" data-language="en">🇬🇧 EN</button>
+        <button class="chip" data-language="de">🇩🇪 DE</button>
+        <button class="chip" data-language="fr">🇫🇷 FR</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label" data-i18n="label_mode">Mode</div>
       <div class="chips" id="modeChips">
-        <button class="chip active" data-mode="lief">😊 Lief</button>
-        <button class="chip" data-mode="boos">😤 Boos</button>
-        <button class="chip" data-mode="schelden">🤬 Scheldwoorden</button>
+        <button class="chip active" data-mode="lief"     data-i18n="mode_lief">😊 Lief</button>
+        <button class="chip"        data-mode="boos"     data-i18n="mode_boos">😤 Boos</button>
+        <button class="chip"        data-mode="schelden" data-i18n="mode_schelden">🤬 Scheldwoorden</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="label">Stem</div>
+      <div class="label" data-i18n="label_voice">Stem</div>
       <div class="chips" id="voiceChips">
-        <button class="chip" data-voice="meisje">👧 Meisje</button>
-        <button class="chip" data-voice="jongen">👦 Jongen</button>
-        <button class="chip active" data-voice="vrouw">👩 Vrouw</button>
-        <button class="chip" data-voice="man">👨 Man</button>
+        <button class="chip"        data-voice="meisje" data-i18n="voice_meisje">👧 Meisje</button>
+        <button class="chip"        data-voice="jongen" data-i18n="voice_jongen">👦 Jongen</button>
+        <button class="chip active" data-voice="vrouw"  data-i18n="voice_vrouw">👩 Vrouw</button>
+        <button class="chip"        data-voice="man"    data-i18n="voice_man">👨 Man</button>
       </div>
     </div>
 
     <div class="card">
       <button class="settings-toggle" id="settingsToggle">
-        <span>⚙️ Instellingen</span>
+        <span data-i18n="settings_title">⚙️ Instellingen</span>
         <span id="settingsArrow">▾</span>
       </button>
       <div class="settings-body hidden" id="settingsBody">
         <div class="row">
-          <label for="aiToggle">AI-modus (echte gesprekken)</label>
-          <button class="switch" id="aiToggle" role="switch" aria-checked="false" aria-label="AI-modus"></button>
+          <label for="aiToggle" data-i18n="settings_ai_label">AI-modus (echte gesprekken)</label>
+          <button class="switch" id="aiToggle" role="switch" aria-checked="false" aria-label="AI"></button>
         </div>
         <div class="field">
-          <label for="apiKey">Claude API-key</label>
+          <label for="apiKey" data-i18n="settings_apikey_label">Claude API-key</label>
           <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" />
-          <div class="help">
+          <div class="help" data-i18n="settings_apikey_help">
             Maak er gratis een aan op <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (Settings → API Keys).
             De key wordt alleen op dit apparaat opgeslagen.
           </div>
         </div>
         <div class="field">
-          <label for="modelSelect">Model</label>
+          <label for="modelSelect" data-i18n="settings_model_label">Model</label>
           <select id="modelSelect">
-            <option value="claude-haiku-4-5-20251001">Haiku 4.5 — snel & goedkoop</option>
-            <option value="claude-sonnet-4-6">Sonnet 4.6 — slimmer, iets duurder</option>
+            <option value="claude-haiku-4-5-20251001" data-i18n="model_haiku">Haiku 4.5 — snel & goedkoop</option>
+            <option value="claude-sonnet-4-6"          data-i18n="model_sonnet">Sonnet 4.6 — slimmer, iets duurder</option>
           </select>
         </div>
-        <button class="btn small danger" id="clearChat">🗑️ Wis gesprek-geheugen</button>
+        <button class="btn small danger" id="clearChat" data-i18n="btn_clear">🗑️ Wis gesprek-geheugen</button>
       </div>
     </div>
   </main>
 
   <script>
-    // Antwoorden per mode — voeg hier gerust eigen zinnen aan toe!
+    // Antwoorden per taal + mode — voeg hier gerust eigen zinnen aan toe!
     const responses = {
+     nl: {
       lief: [
-        "Het komt goed, ik ben bij je. ❤️",
+        "Het komt goed, ik ben bij je.",
         "Adem rustig in... en uit.",
         "Je bent niet alleen, ik luister.",
         "Wat fijn dat je iets zegt.",
         "Neem je tijd, geen haast.",
         "Je doet het goed, echt waar.",
-        "Even pauze, dat mag."
+        "Even pauze, dat mag.",
+        "Voel maar wat je voelt, dat hoort erbij.",
+        "Je hoeft niks te zijn, alleen jezelf.",
+        "Wat ben je sterk om dit aan te gaan.",
+        "Eén stap tegelijk, meer hoeft niet.",
+        "Ik ben trots op je.",
+        "Het is oké om even niets te doen.",
+        "Wees lief voor jezelf vandaag.",
+        "Je verdient een momentje rust.",
+        "Sluit je ogen even, ik wacht wel.",
+        "Het mag stil zijn tussen ons.",
+        "Je bent meer dan deze dag.",
+        "Niks hoeft, alles mag.",
+        "Ik geloof in je, altijd.",
+        "Wat fijn dat je er bent.",
+        "Morgen is een nieuwe dag.",
+        "Het is écht goed zo.",
+        "Je bent op de goede weg, geloof me.",
+        "Hou maar even vast, ik laat niet los.",
+        "Geen zorgen, samen komen we eruit.",
+        "Schouders los, kaken los, het mag zacht.",
+        "Wat je voelt is logisch, echt."
       ],
       boos: [
         "Kom op nou, doorzetten!",
@@ -285,7 +313,29 @@
         "Niet kennen geven, ga ervoor!",
         "Zet door, ook al is het zwaar.",
         "Hé! Wakker blijven!",
-        "Sta op en ga ervoor!"
+        "Sta op en ga ervoor!",
+        "Niet zeuren, gewoon doen!",
+        "Wat sta je daar nog? Aan de slag!",
+        "Schiet eens op, de tijd tikt!",
+        "Geen excuses meer, hup!",
+        "Kop op en knokken!",
+        "Niet opgeven, juist nu niet!",
+        "Tanden op elkaar en doorgaan!",
+        "Hup hup, niet zo slap!",
+        "Concentreer je, kom op zeg!",
+        "Geen tijd voor uitstel, gaan!",
+        "Bewijs jezelf dat je het kunt!",
+        "Doorbijten, je hebt dit in je!",
+        "Schop jezelf in beweging!",
+        "Maak het af, nu meteen!",
+        "Wat zit je nou te treuzelen? Focus!",
+        "Hou op met twijfelen en ga gewoon!",
+        "Klagen kan straks, eerst doen!",
+        "Komaan, niet inzakken nu!",
+        "Geef die luiheid eens een schop!",
+        "Niet janken, knokken!",
+        "Pak die taak bij de lurven!",
+        "Ophouden met dralen, beginnen!"
       ],
       schelden: [
         "Sukkel, wat ben je nou aan het doen?!",
@@ -293,11 +343,401 @@
         "Doe even normaal, mafkees!",
         "Wakker worden, sukkel!",
         "Hallo?! Ben je daar nog?!",
-        "Pannenkoek! Schiet eens op!"
+        "Pannenkoek! Schiet eens op!",
+        "Wat een oen ben jij, zeg!",
+        "Sufferd, doe eens je best!",
+        "Mafketel, wat doe je nou?!",
+        "Halve gare, wakker worden!",
+        "Watje, niet zo zielig doen!",
+        "Slome duikelaar, vooruit!",
+        "Sloompie, schiet nou eens op!",
+        "Pannenkoek met stroop, focus eens!",
+        "Mafkees, hou je kop erbij!",
+        "Oelewapper, doe normaal!",
+        "Stommerd, denk eens nuchter na!",
+        "Sukkelpuk, kom op zeg!",
+        "Sufkop, wakker worden nu!",
+        "Halve zool, doorpakken!",
+        "Wat zit je daar te suffen, oen?!",
+        "Sloompie de slome, opschieten!",
+        "Halve gare, focus eens een seconde!",
+        "Doe niet zo slap, sufferd!",
+        "Wat een mafkees ben jij vandaag!",
+        "Hé pannenkoek, wakker worden!",
+        "Sukkel-de-luxe, in beweging komen!",
+        "Sufferd van de bovenste plank, hop!",
+        "Halve garnaal, ga eens iets doen!",
+        "Mafketel-in-de-dop, kom op!"
       ]
+     },
+     en: {
+      lief: [
+        "It's going to be okay, I'm here with you.",
+        "Breathe in slowly... and out.",
+        "You're not alone, I'm listening.",
+        "I'm glad you said something.",
+        "Take your time, no rush.",
+        "You're doing well, really.",
+        "A little break is fine.",
+        "Feel what you feel, it's all okay.",
+        "You don't have to be anything, just yourself.",
+        "You're so strong for facing this.",
+        "One step at a time, that's enough.",
+        "I'm proud of you.",
+        "It's okay to do nothing for a while.",
+        "Be kind to yourself today.",
+        "You deserve a moment of rest.",
+        "Close your eyes, I'll wait.",
+        "It's fine to be quiet together.",
+        "You are more than this day.",
+        "Nothing has to happen, everything is allowed.",
+        "I believe in you, always.",
+        "I'm glad you're here.",
+        "Tomorrow is a new day.",
+        "It really is fine like this.",
+        "You're on the right path, trust me.",
+        "Just hold on, I won't let go."
+      ],
+      boos: [
+        "Come on, push through!",
+        "Don't you dare give up!",
+        "Don't show weakness, go for it!",
+        "Keep going, even if it's hard.",
+        "Hey! Stay awake!",
+        "Get up and go!",
+        "Stop whining, just do it!",
+        "What are you waiting for? Get moving!",
+        "Hurry up, the clock is ticking!",
+        "No more excuses, go!",
+        "Chin up and fight!",
+        "Don't give up, especially not now!",
+        "Grit your teeth and push on!",
+        "Come on, don't be so soft!",
+        "Focus, will you!",
+        "No time to dawdle, move!",
+        "Prove to yourself that you can!",
+        "Bite down, you've got this!",
+        "Kick yourself into gear!",
+        "Finish it, right now!",
+        "Stop stalling and focus!",
+        "Stop doubting and just go!",
+        "Complain later, act first!",
+        "Come on, don't slump now!",
+        "Give that laziness a kick!"
+      ],
+      schelden: [
+        "Doofus, what are you doing?!",
+        "Have you completely lost it?!",
+        "Get a grip, you nutter!",
+        "Wake up, knucklehead!",
+        "Hello?! Are you still there?!",
+        "You pancake, hurry up!",
+        "What a goofball you are!",
+        "Numbskull, what are you up to?!",
+        "Half-wit, wake up already!",
+        "Don't be such a wimp!",
+        "Slowpoke, let's go!",
+        "Sleepyhead, come on!",
+        "Get it together, dummy!",
+        "Knucklehead, focus!",
+        "Blockhead, use your brain!",
+        "Silly goose, come on now!",
+        "Numpty, push through!",
+        "What are you staring at, dope?!",
+        "Slowpoke, hurry it up!",
+        "Don't be soft, doofus!",
+        "What a numpty you are today!",
+        "Hey pancake, wake up!",
+        "Goofball deluxe, get moving!"
+      ]
+     },
+     de: {
+      lief: [
+        "Es wird gut, ich bin bei dir.",
+        "Atme ruhig ein... und aus.",
+        "Du bist nicht allein, ich höre zu.",
+        "Schön, dass du etwas sagst.",
+        "Nimm dir Zeit, keine Eile.",
+        "Du machst das gut, wirklich.",
+        "Eine kleine Pause ist okay.",
+        "Fühl, was du fühlst, das gehört dazu.",
+        "Du musst nichts sein, nur du selbst.",
+        "Du bist stark, dass du das angehst.",
+        "Schritt für Schritt, mehr braucht es nicht.",
+        "Ich bin stolz auf dich.",
+        "Es ist okay, mal nichts zu tun.",
+        "Sei heute lieb zu dir selbst.",
+        "Du verdienst einen Moment Ruhe.",
+        "Schließ die Augen, ich warte.",
+        "Es darf still sein zwischen uns.",
+        "Du bist mehr als dieser Tag.",
+        "Nichts muss, alles darf.",
+        "Ich glaube an dich, immer.",
+        "Schön, dass du da bist.",
+        "Morgen ist ein neuer Tag.",
+        "Es ist wirklich gut so.",
+        "Du bist auf dem richtigen Weg, glaub mir.",
+        "Halt dich fest, ich lasse nicht los."
+      ],
+      boos: [
+        "Komm schon, durchhalten!",
+        "Das gibst du nicht einfach auf!",
+        "Zeig keine Schwäche, los geht's!",
+        "Mach weiter, auch wenn es schwer ist.",
+        "Hey! Wach bleiben!",
+        "Steh auf und los!",
+        "Hör auf zu jammern, einfach machen!",
+        "Worauf wartest du? Los geht's!",
+        "Beeil dich, die Zeit läuft!",
+        "Keine Ausreden mehr, los!",
+        "Kopf hoch und kämpfen!",
+        "Nicht aufgeben, gerade jetzt nicht!",
+        "Zähne zusammenbeißen und weiter!",
+        "Komm schon, sei nicht so weich!",
+        "Konzentrier dich, los!",
+        "Keine Zeit zum Trödeln, geh!",
+        "Beweis dir, dass du es kannst!",
+        "Beiß dich durch, du schaffst das!",
+        "Gib dir einen Tritt!",
+        "Mach es fertig, jetzt sofort!",
+        "Hör auf zu trödeln, fokussier dich!",
+        "Hör auf zu zweifeln, geh einfach!",
+        "Jammern kannst du später, erst tun!",
+        "Komm schon, jetzt nicht einknicken!",
+        "Gib der Faulheit einen Tritt!"
+      ],
+      schelden: [
+        "Dummkopf, was machst du da?!",
+        "Bist du völlig verrückt geworden?!",
+        "Reiß dich zusammen, du Trottel!",
+        "Aufwachen, Schussel!",
+        "Hallo?! Bist du noch da?!",
+        "Du Pfannkuchen, beeil dich!",
+        "Was bist du für ein Tollpatsch!",
+        "Tölpel, streng dich an!",
+        "Schlafmütze, was machst du?!",
+        "Halbpfosten, wach auf!",
+        "Sei kein Weichei!",
+        "Lahme Ente, los geht's!",
+        "Schlafmütze, komm schon!",
+        "Reiß dich zusammen, Dummerchen!",
+        "Trottel, konzentrier dich!",
+        "Tollpatsch, benimm dich!",
+        "Holzkopf, denk mal nach!",
+        "Dummerchen, komm schon!",
+        "Schlafmütze, aufwachen!",
+        "Hohlkopf, durchhalten!",
+        "Was guckst du so, Dödel?!",
+        "Lahme Ente, beeil dich!",
+        "Sei nicht so lasch, Tölpel!",
+        "Was für ein Dödel du heute bist!",
+        "Hey Pfannkuchen, aufwachen!"
+      ]
+     },
+     fr: {
+      lief: [
+        "Ça va aller, je suis là.",
+        "Respire doucement... et expire.",
+        "Tu n'es pas seul, je t'écoute.",
+        "C'est bien que tu en parles.",
+        "Prends ton temps, rien ne presse.",
+        "Tu fais ça bien, vraiment.",
+        "Une petite pause, c'est okay.",
+        "Ressens ce que tu ressens, c'est normal.",
+        "Tu n'as à être personne d'autre que toi.",
+        "Tu es fort de faire face à ça.",
+        "Un pas à la fois, ça suffit.",
+        "Je suis fier de toi.",
+        "C'est okay de ne rien faire un moment.",
+        "Sois doux avec toi-même aujourd'hui.",
+        "Tu mérites un moment de calme.",
+        "Ferme les yeux, j'attends.",
+        "Le silence est permis entre nous.",
+        "Tu es plus que cette journée.",
+        "Rien n'oblige, tout est permis.",
+        "Je crois en toi, toujours.",
+        "Content que tu sois là.",
+        "Demain est un nouveau jour.",
+        "C'est vraiment bien comme ça.",
+        "Tu es sur la bonne voie, fais-moi confiance.",
+        "Tiens bon, je ne lâche pas."
+      ],
+      boos: [
+        "Allez, persévère!",
+        "Tu ne lâches pas comme ça!",
+        "Ne te laisse pas faire, vas-y!",
+        "Continue, même si c'est dur.",
+        "Hé! Reste éveillé!",
+        "Lève-toi et fonce!",
+        "Arrête de râler, fais-le!",
+        "Qu'est-ce que tu attends? Vas-y!",
+        "Dépêche, le temps file!",
+        "Plus d'excuses, allez!",
+        "Tête haute et bats-toi!",
+        "N'abandonne pas, surtout pas maintenant!",
+        "Serre les dents et avance!",
+        "Allez, ne sois pas mou!",
+        "Concentre-toi, voyons!",
+        "Pas le temps de traîner, bouge!",
+        "Prouve-toi que tu en es capable!",
+        "Accroche-toi, tu peux le faire!",
+        "Botte-toi les fesses!",
+        "Termine-le, tout de suite!",
+        "Arrête de traîner, focus!",
+        "Arrête de douter et fonce!",
+        "Tu te plaindras plus tard, agis!",
+        "Allez, ne flanche pas maintenant!",
+        "Donne un coup de pied à la paresse!"
+      ],
+      schelden: [
+        "Idiot, qu'est-ce que tu fais?!",
+        "T'es devenu complètement fou?!",
+        "Reprends-toi, espèce de nigaud!",
+        "Réveille-toi, andouille!",
+        "Allô?! T'es encore là?!",
+        "Espèce de gourde, dépêche!",
+        "Quel cornichon tu fais!",
+        "Patate, fais un effort!",
+        "Bêta, qu'est-ce que tu fabriques?!",
+        "Demi-portion, réveille-toi!",
+        "Ne sois pas une chochotte!",
+        "Lambin, en avant!",
+        "Marmotte, allez!",
+        "Ressaisis-toi, nigaud!",
+        "Andouille, concentre-toi!",
+        "Cornichon, comporte-toi bien!",
+        "Tête de linotte, réfléchis!",
+        "Bêta, allez quoi!",
+        "Marmotte, réveille-toi!",
+        "Nigaud, accroche-toi!",
+        "Qu'est-ce que tu regardes, gourde?!",
+        "Lambin, presse-toi!",
+        "Ne sois pas mou, andouille!",
+        "Quel nigaud tu fais aujourd'hui!",
+        "Hé patate, réveille-toi!"
+      ]
+     }
     };
 
-    const state = { mode: "lief", voice: "vrouw", theme: "light", voices: [] };
+    const state = { mode: "lief", voice: "vrouw", language: "nl", theme: "light", voices: [] };
+
+    const LANG_CODES = { nl: "nl-NL", en: "en-US", de: "de-DE", fr: "fr-FR" };
+    const LANG_NAMES = { nl: "Dutch", en: "English", de: "German", fr: "French" };
+    const langCode = (l) => LANG_CODES[l] || "nl-NL";
+
+    // UI vertalingen
+    const ui = {
+      nl: {
+        theme_dark: "🌙 Donker", theme_light: "☀️ Licht",
+        response_empty: "Typ iets of druk op de microfoon...",
+        response_cleared: "Gesprek-geheugen gewist.",
+        input_placeholder: "Wat wil je zeggen?",
+        btn_send: "Stuur",
+        mic_title: "Praat tegen de app",
+        mic_disabled_title: "Microfoon werkt niet in deze browser (probeer Chrome of Safari)",
+        label_language: "Taal", label_mode: "Mode", label_voice: "Stem",
+        mode_lief: "😊 Lief", mode_boos: "😤 Boos", mode_schelden: "🤬 Scheldwoorden",
+        voice_meisje: "👧 Meisje", voice_jongen: "👦 Jongen",
+        voice_vrouw: "👩 Vrouw", voice_man: "👨 Man",
+        settings_title: "⚙️ Instellingen",
+        settings_ai_label: "AI-modus (echte gesprekken)",
+        settings_apikey_label: "Claude API-key",
+        settings_apikey_help: 'Maak er gratis een aan op <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (Settings → API Keys). De key wordt alleen op dit apparaat opgeslagen.',
+        settings_model_label: "Model",
+        model_haiku: "Haiku 4.5 — snel & goedkoop",
+        model_sonnet: "Sonnet 4.6 — slimmer, iets duurder",
+        btn_clear: "🗑️ Wis gesprek-geheugen",
+        err_api: "Oeps, kon Claude niet bereiken. "
+      },
+      en: {
+        theme_dark: "🌙 Dark", theme_light: "☀️ Light",
+        response_empty: "Type something or press the microphone...",
+        response_cleared: "Conversation memory cleared.",
+        input_placeholder: "What do you want to say?",
+        btn_send: "Send",
+        mic_title: "Talk to the app",
+        mic_disabled_title: "Microphone doesn't work in this browser (try Chrome or Safari)",
+        label_language: "Language", label_mode: "Mode", label_voice: "Voice",
+        mode_lief: "😊 Kind", mode_boos: "😤 Angry", mode_schelden: "🤬 Insults",
+        voice_meisje: "👧 Girl", voice_jongen: "👦 Boy",
+        voice_vrouw: "👩 Woman", voice_man: "👨 Man",
+        settings_title: "⚙️ Settings",
+        settings_ai_label: "AI mode (real conversations)",
+        settings_apikey_label: "Claude API key",
+        settings_apikey_help: 'Get one for free at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (Settings → API Keys). The key is stored on this device only.',
+        settings_model_label: "Model",
+        model_haiku: "Haiku 4.5 — fast & cheap",
+        model_sonnet: "Sonnet 4.6 — smarter, a bit pricier",
+        btn_clear: "🗑️ Clear conversation memory",
+        err_api: "Oops, couldn't reach Claude. "
+      },
+      de: {
+        theme_dark: "🌙 Dunkel", theme_light: "☀️ Hell",
+        response_empty: "Tippe etwas oder drücke das Mikrofon...",
+        response_cleared: "Gesprächsverlauf gelöscht.",
+        input_placeholder: "Was möchtest du sagen?",
+        btn_send: "Senden",
+        mic_title: "Sprich mit der App",
+        mic_disabled_title: "Mikrofon funktioniert in diesem Browser nicht (versuche Chrome oder Safari)",
+        label_language: "Sprache", label_mode: "Modus", label_voice: "Stimme",
+        mode_lief: "😊 Lieb", mode_boos: "😤 Wütend", mode_schelden: "🤬 Schimpfwörter",
+        voice_meisje: "👧 Mädchen", voice_jongen: "👦 Junge",
+        voice_vrouw: "👩 Frau", voice_man: "👨 Mann",
+        settings_title: "⚙️ Einstellungen",
+        settings_ai_label: "KI-Modus (echte Gespräche)",
+        settings_apikey_label: "Claude API-Key",
+        settings_apikey_help: 'Hol dir einen kostenlosen unter <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (Settings → API Keys). Der Key wird nur auf diesem Gerät gespeichert.',
+        settings_model_label: "Modell",
+        model_haiku: "Haiku 4.5 — schnell & günstig",
+        model_sonnet: "Sonnet 4.6 — schlauer, etwas teurer",
+        btn_clear: "🗑️ Gesprächsverlauf löschen",
+        err_api: "Hoppla, Claude nicht erreichbar. "
+      },
+      fr: {
+        theme_dark: "🌙 Sombre", theme_light: "☀️ Clair",
+        response_empty: "Écris quelque chose ou appuie sur le micro...",
+        response_cleared: "Mémoire de conversation effacée.",
+        input_placeholder: "Que veux-tu dire?",
+        btn_send: "Envoyer",
+        mic_title: "Parle à l'app",
+        mic_disabled_title: "Le micro ne marche pas dans ce navigateur (essaie Chrome ou Safari)",
+        label_language: "Langue", label_mode: "Mode", label_voice: "Voix",
+        mode_lief: "😊 Gentil", mode_boos: "😤 Fâché", mode_schelden: "🤬 Insultes",
+        voice_meisje: "👧 Fille", voice_jongen: "👦 Garçon",
+        voice_vrouw: "👩 Femme", voice_man: "👨 Homme",
+        settings_title: "⚙️ Paramètres",
+        settings_ai_label: "Mode IA (vraies conversations)",
+        settings_apikey_label: "Clé API Claude",
+        settings_apikey_help: 'Obtiens-en une gratuitement sur <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (Settings → API Keys). La clé est stockée uniquement sur cet appareil.',
+        settings_model_label: "Modèle",
+        model_haiku: "Haiku 4.5 — rapide et bon marché",
+        model_sonnet: "Sonnet 4.6 — plus malin, un peu plus cher",
+        btn_clear: "🗑️ Effacer la mémoire",
+        err_api: "Oups, impossible d'atteindre Claude. "
+      }
+    };
+    let T = ui.nl;
+
+    function applyUI() {
+      T = ui[state.language] || ui.nl;
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.dataset.i18n;
+        const val = T[key];
+        if (val === undefined) return;
+        if (val.indexOf("<") !== -1) el.innerHTML = val;
+        else el.textContent = val;
+      });
+      const inp = document.getElementById("userInput");
+      if (inp) inp.placeholder = T.input_placeholder;
+      const mb = document.getElementById("micBtn");
+      if (mb) mb.title = mb.disabled ? T.mic_disabled_title : T.mic_title;
+      const tb = document.getElementById("themeBtn");
+      if (tb) tb.textContent = (state.theme === "light") ? T.theme_dark : T.theme_light;
+      const resp = document.getElementById("response");
+      if (resp && resp.classList.contains("empty")) resp.textContent = T.response_empty;
+      document.documentElement.lang = state.language;
+    }
+
     const $ = (id) => document.getElementById(id);
     const avatar = $("avatar");
     const responseEl = $("response");
@@ -306,7 +746,7 @@
     $("themeBtn").addEventListener("click", () => {
       state.theme = state.theme === "light" ? "dark" : "light";
       document.body.dataset.theme = state.theme;
-      $("themeBtn").textContent = state.theme === "light" ? "🌙 Donker" : "☀️ Licht";
+      $("themeBtn").textContent = state.theme === "light" ? T.theme_dark : T.theme_light;
     });
 
     // Knoppen-rijtjes (mode / stem)
@@ -326,6 +766,7 @@
       updateFace();
     });
     setupChips("voiceChips", "voice", (v) => { state.voice = v; });
+    setupChips("languageChips", "language", (l) => { state.language = l; applyUI(); });
 
     // Gezichtsuitdrukking per mode
     function updateFace() {
@@ -354,13 +795,14 @@
     }
 
     function pickVoice(name) {
-      const dutch = state.voices.filter(v => v.lang && v.lang.toLowerCase().startsWith("nl"));
-      const pool = dutch.length ? dutch : state.voices;
+      const prefix = state.language;
+      const inLang = state.voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(prefix));
+      const pool = inLang.length ? inLang : state.voices;
       const wantsFemale = name === "meisje" || name === "vrouw";
       const candidates = pool.filter(v => {
         const n = v.name.toLowerCase();
-        if (wantsFemale) return /female|vrouw|fem|woman|girl|anna|lotte|claire|hanna|saskia|ellen/.test(n);
-        return /male|man|jongen|boy|jeroen|martijn|xander|ruben|daniel/.test(n);
+        if (wantsFemale) return /female|vrouw|fem|woman|girl|anna|lotte|claire|hanna|saskia|ellen|samantha|karen|amelie|amélie|audrey|marie|petra|katrin/.test(n);
+        return /male|man|jongen|boy|jeroen|martijn|xander|ruben|daniel|alex|thomas|markus|stefan|jorge|paul/.test(n);
       });
       return candidates[0] || pool[0] || state.voices[0];
     }
@@ -378,20 +820,54 @@
       return base;
     }
 
+    let mouthInterval = null;
+    let watchdogInterval = null;
+
+    function startMouthAnim() {
+      stopMouthAnim();
+      avatar.classList.add("speaking");
+      const mouth = $("mouth");
+      const baseRy = state.mode === "schelden" ? 10 : (state.mode === "boos" ? 5 : 6);
+      mouthInterval = setInterval(() => {
+        const open = Math.random() > 0.35;
+        const r = open
+          ? baseRy * (1.3 + Math.random() * 0.7)
+          : baseRy * (0.2 + Math.random() * 0.3);
+        mouth.setAttribute("ry", r.toFixed(1));
+      }, 110);
+      const startedAt = Date.now();
+      watchdogInterval = setInterval(() => {
+        if (Date.now() - startedAt < 400) return;
+        if (!speechSynthesis.speaking && !speechSynthesis.pending) stopMouthAnim();
+      }, 200);
+    }
+
+    function stopMouthAnim() {
+      avatar.classList.remove("speaking");
+      if (mouthInterval)   { clearInterval(mouthInterval);   mouthInterval = null; }
+      if (watchdogInterval){ clearInterval(watchdogInterval); watchdogInterval = null; }
+      updateFace();
+    }
+
     function speak(text) {
       if (!("speechSynthesis" in window)) return;
       speechSynthesis.cancel();
+      stopMouthAnim();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = "nl-NL";
+      u.lang = langCode(state.language);
       const v = pickVoice(state.voice);
       if (v) u.voice = v;
       const { pitch, rate } = pitchRateFor(state.voice, state.mode);
       u.pitch = Math.max(0, Math.min(2, pitch));
       u.rate  = Math.max(0.1, Math.min(2, rate));
-      u.onstart = () => avatar.classList.add("speaking");
-      u.onend   = () => avatar.classList.remove("speaking");
-      u.onerror = () => avatar.classList.remove("speaking");
+      u.onstart = startMouthAnim;
+      u.onend   = stopMouthAnim;
+      u.onerror = stopMouthAnim;
       speechSynthesis.speak(u);
+      // Vangnet: sommige browsers vuren onstart niet altijd af.
+      setTimeout(() => {
+        if (!mouthInterval && speechSynthesis.speaking) startMouthAnim();
+      }, 250);
     }
 
     function showResponse(text) {
@@ -402,7 +878,8 @@
     }
 
     function randomReply() {
-      const arr = responses[state.mode];
+      const langSet = responses[state.language] || responses.nl;
+      const arr = langSet[state.mode] || langSet.lief;
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
@@ -418,7 +895,7 @@
           speak(text);
         } catch (e) {
           avatar.classList.remove("speaking");
-          showResponse("Oeps, kon Claude niet bereiken. " + e.message);
+          showResponse(T.err_api + e.message);
         }
       } else {
         const text = randomReply();
@@ -446,12 +923,13 @@
       micBtn.style.opacity = 0.4;
     } else {
       const rec = new SR();
-      rec.lang = "nl-NL";
+      rec.lang = langCode(state.language);
       rec.interimResults = false;
       rec.maxAlternatives = 1;
       let listening = false;
       micBtn.addEventListener("click", () => {
         if (listening) { rec.stop(); return; }
+        rec.lang = langCode(state.language);
         try { rec.start(); } catch (e) {}
       });
       rec.onstart  = () => { listening = true;  micBtn.classList.add("listening"); };
@@ -529,16 +1007,17 @@
     $("clearChat").addEventListener("click", () => {
       history = [];
       saveHistory();
-      showResponse("Gesprek-geheugen gewist.");
+      showResponse(T.response_cleared);
     });
 
-    function systemPromptForMode(mode) {
-      const base = "Antwoord altijd in het Nederlands, kort (1-2 zinnen), in spreektaal die wordt voorgelezen door TTS. Geen emoji's, geen opsommingen, geen markdown, geen aanhalingstekens om het antwoord.";
+    function systemPromptForMode(mode, lang) {
+      const langName = LANG_NAMES[lang] || "Dutch";
+      const base = `Always answer in ${langName}, short (1-2 sentences), in spoken style for TTS. No emoji, no lists, no markdown, no surrounding quote marks.`;
       if (mode === "lief")
-        return base + " Je bent warm, kalmerend en troostend. Help de gebruiker rustig worden.";
+        return base + " You are warm, calming and comforting. Help the user relax.";
       if (mode === "boos")
-        return base + " Je bent streng en motiverend; je geeft de gebruiker een schop onder de kont. Niet écht kwetsend.";
-      return base + " Je scheldt de gebruiker grappig uit met milde Nederlandse scheldwoorden (sukkel, mafkees, oen, pannenkoek, sufferd). Het mag pittig maar nooit écht kwetsend; geen scheldwoorden over uiterlijk, familie, geloof, geaardheid of identiteit.";
+        return base + " You are strict and motivating; give the user a kick in the pants. Not actually hurtful.";
+      return base + " You tease the user with mild, culturally appropriate insults in the chosen language (e.g. in Dutch: sukkel/mafkees/oen/pannenkoek; English: doofus/numpty/knucklehead; German: Trottel/Tollpatsch/Schussel; French: nigaud/andouille/cornichon). It may be punchy but never genuinely hurtful; nothing about appearance, family, religion, sexuality or identity.";
     }
 
     async function callClaude(userText) {
@@ -558,7 +1037,7 @@
           max_tokens: 200,
           system: [{
             type: "text",
-            text: systemPromptForMode(state.mode),
+            text: systemPromptForMode(state.mode, state.language),
             cache_control: { type: "ephemeral" }
           }],
           messages: history
@@ -575,6 +1054,9 @@
       saveHistory();
       return text;
     }
+
+    // Initiele UI-vertaling toepassen (na mic-setup zodat de juiste mic-title gekozen wordt)
+    applyUI();
   </script>
 </body>
 </html>
