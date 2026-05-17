@@ -307,19 +307,24 @@
           <button class="switch" id="aiToggle" role="switch" aria-checked="false" aria-label="AI"></button>
         </div>
         <div class="field">
-          <label for="apiKey" data-i18n="settings_apikey_label">Claude API-key</label>
+          <label for="providerSelect" data-i18n="settings_provider_label">Provider</label>
+          <select id="providerSelect">
+            <option value="anthropic">Claude (Anthropic)</option>
+            <option value="openai">ChatGPT (OpenAI)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="apiKey" data-i18n="settings_apikey_label">API-key</label>
           <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" />
-          <div class="help" data-i18n="settings_apikey_help">
-            Maak er gratis een aan op <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (Settings → API Keys).
-            De key wordt alleen op dit apparaat opgeslagen.
+          <div class="help">
+            <a id="apiKeyLink" href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com → Settings → API Keys</a>
+            <br>
+            <span data-i18n="settings_apikey_help">De key wordt alleen op dit apparaat opgeslagen.</span>
           </div>
         </div>
         <div class="field">
           <label for="modelSelect" data-i18n="settings_model_label">Model</label>
-          <select id="modelSelect">
-            <option value="claude-haiku-4-5-20251001" data-i18n="model_haiku">Haiku 4.5 — snel & goedkoop</option>
-            <option value="claude-sonnet-4-6"          data-i18n="model_sonnet">Sonnet 4.6 — slimmer, iets duurder</option>
-          </select>
+          <select id="modelSelect"></select>
         </div>
         <button class="btn small danger" id="clearChat" data-i18n="btn_clear">🗑️ Wis gesprek-geheugen</button>
       </div>
@@ -1042,6 +1047,48 @@
     const LANG_NAMES = { nl: "Dutch", en: "English", de: "German", fr: "French" };
     const langCode = (l) => LANG_CODES[l] || "nl-NL";
 
+    // AI providers: Claude (Anthropic) of ChatGPT (OpenAI)
+    const PROVIDERS = {
+      anthropic: {
+        name: "Claude (Anthropic)",
+        keyPlaceholder: "sk-ant-...",
+        helpUrl: "https://console.anthropic.com",
+        helpUrlLabel: "console.anthropic.com",
+        helpExtra: "→ Settings → API Keys",
+        models: [
+          { value: "claude-haiku-4-5-20251001",
+            label: { nl: "Haiku 4.5 — snel & goedkoop",
+                     en: "Haiku 4.5 — fast & cheap",
+                     de: "Haiku 4.5 — schnell & günstig",
+                     fr: "Haiku 4.5 — rapide et bon marché" } },
+          { value: "claude-sonnet-4-6",
+            label: { nl: "Sonnet 4.6 — slimmer, iets duurder",
+                     en: "Sonnet 4.6 — smarter, a bit pricier",
+                     de: "Sonnet 4.6 — schlauer, etwas teurer",
+                     fr: "Sonnet 4.6 — plus malin, un peu plus cher" } }
+        ]
+      },
+      openai: {
+        name: "ChatGPT (OpenAI)",
+        keyPlaceholder: "sk-...",
+        helpUrl: "https://platform.openai.com/api-keys",
+        helpUrlLabel: "platform.openai.com",
+        helpExtra: "→ API keys → Create new",
+        models: [
+          { value: "gpt-4o-mini",
+            label: { nl: "GPT-4o mini — snel & goedkoop",
+                     en: "GPT-4o mini — fast & cheap",
+                     de: "GPT-4o mini — schnell & günstig",
+                     fr: "GPT-4o mini — rapide et bon marché" } },
+          { value: "gpt-4o",
+            label: { nl: "GPT-4o — slimmer, iets duurder",
+                     en: "GPT-4o — smarter, a bit pricier",
+                     de: "GPT-4o — schlauer, etwas teurer",
+                     fr: "GPT-4o — plus malin, un peu plus cher" } }
+        ]
+      }
+    };
+
     // UI vertalingen
     const ui = {
       nl: {
@@ -1058,8 +1105,9 @@
         voice_vrouw: "👩 Vrouw", voice_man: "👨 Man",
         settings_title: "⚙️ Instellingen",
         settings_ai_label: "AI-modus (echte gesprekken)",
-        settings_apikey_label: "Claude API-key",
-        settings_apikey_help: 'Maak er gratis een aan op <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (Settings → API Keys). De key wordt alleen op dit apparaat opgeslagen.',
+        settings_provider_label: "Provider",
+        settings_apikey_label: "API-key",
+        settings_apikey_help: "De key wordt alleen op dit apparaat opgeslagen.",
         settings_model_label: "Model",
         model_haiku: "Haiku 4.5 — snel & goedkoop",
         model_sonnet: "Sonnet 4.6 — slimmer, iets duurder",
@@ -1082,8 +1130,9 @@
         voice_vrouw: "👩 Woman", voice_man: "👨 Man",
         settings_title: "⚙️ Settings",
         settings_ai_label: "AI mode (real conversations)",
-        settings_apikey_label: "Claude API key",
-        settings_apikey_help: 'Get one for free at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (Settings → API Keys). The key is stored on this device only.',
+        settings_provider_label: "Provider",
+        settings_apikey_label: "API key",
+        settings_apikey_help: "The key is stored on this device only.",
         settings_model_label: "Model",
         model_haiku: "Haiku 4.5 — fast & cheap",
         model_sonnet: "Sonnet 4.6 — smarter, a bit pricier",
@@ -1106,8 +1155,9 @@
         voice_vrouw: "👩 Frau", voice_man: "👨 Mann",
         settings_title: "⚙️ Einstellungen",
         settings_ai_label: "KI-Modus (echte Gespräche)",
-        settings_apikey_label: "Claude API-Key",
-        settings_apikey_help: 'Hol dir einen kostenlosen unter <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (Settings → API Keys). Der Key wird nur auf diesem Gerät gespeichert.',
+        settings_provider_label: "Anbieter",
+        settings_apikey_label: "API-Key",
+        settings_apikey_help: "Der Key wird nur auf diesem Gerät gespeichert.",
         settings_model_label: "Modell",
         model_haiku: "Haiku 4.5 — schnell & günstig",
         model_sonnet: "Sonnet 4.6 — schlauer, etwas teurer",
@@ -1130,8 +1180,9 @@
         voice_vrouw: "👩 Femme", voice_man: "👨 Homme",
         settings_title: "⚙️ Paramètres",
         settings_ai_label: "Mode IA (vraies conversations)",
-        settings_apikey_label: "Clé API Claude",
-        settings_apikey_help: 'Obtiens-en une gratuitement sur <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (Settings → API Keys). La clé est stockée uniquement sur cet appareil.',
+        settings_provider_label: "Fournisseur",
+        settings_apikey_label: "Clé API",
+        settings_apikey_help: "La clé est stockée uniquement sur cet appareil.",
         settings_model_label: "Modèle",
         model_haiku: "Haiku 4.5 — rapide et bon marché",
         model_sonnet: "Sonnet 4.6 — plus malin, un peu plus cher",
@@ -1162,6 +1213,10 @@
       if (musb) musb.title = musicOn ? T.music_on_title : T.music_off_title;
       document.documentElement.lang = state.language;
       renderExamples();
+      // Werk de model-labels in de provider-UI bij (afhankelijk van taal)
+      if (typeof applyProviderUI === "function" && document.getElementById("modelSelect")) {
+        applyProviderUI();
+      }
     }
 
     function renderExamples() {
@@ -1393,11 +1448,11 @@
       addMessage("user", userText);
       saveHistory();
 
-      if (settings.aiMode && settings.apiKey) {
+      if (settings.aiMode && currentProvider().apiKey) {
         const typing = addMessage("assistant", "", { typing: true });
         avatar.classList.add("speaking");
         try {
-          const text = await callClaude();
+          const text = await callAI();
           typing.remove();
           avatar.classList.remove("speaking");
           addMessage("assistant", text);
@@ -1459,15 +1514,21 @@
     // === Instellingen + AI-chat ===
     const settings = {
       aiMode: false,
-      apiKey: "",
-      model: "claude-haiku-4-5-20251001"
+      provider: "anthropic",
+      anthropic: { apiKey: "", model: "claude-haiku-4-5-20251001" },
+      openai:    { apiKey: "", model: "gpt-4o-mini" }
     };
     let history = [];
 
     function loadSettings() {
       settings.aiMode = localStorage.getItem("boosapp_aimode") === "1";
-      settings.apiKey = localStorage.getItem("boosapp_apikey") || "";
-      settings.model  = localStorage.getItem("boosapp_model")  || settings.model;
+      settings.provider = localStorage.getItem("boosapp_provider") || "anthropic";
+      // Anthropic (oude boosapp_apikey/boosapp_model worden hergebruikt voor backwards compat)
+      settings.anthropic.apiKey = localStorage.getItem("boosapp_apikey") || "";
+      settings.anthropic.model  = localStorage.getItem("boosapp_model")  || settings.anthropic.model;
+      // OpenAI
+      settings.openai.apiKey = localStorage.getItem("boosapp_openai_key")   || "";
+      settings.openai.model  = localStorage.getItem("boosapp_openai_model") || settings.openai.model;
       // Gesprek alleen binnen huidige browser-sessie: weg zodra de tab sluit.
       localStorage.removeItem("boosapp_history"); // oude persistente data opruimen
       try { history = JSON.parse(sessionStorage.getItem("boosapp_history") || "[]"); }
@@ -1475,9 +1536,13 @@
     }
     function saveSettings() {
       localStorage.setItem("boosapp_aimode", settings.aiMode ? "1" : "0");
-      localStorage.setItem("boosapp_apikey", settings.apiKey);
-      localStorage.setItem("boosapp_model",  settings.model);
+      localStorage.setItem("boosapp_provider", settings.provider);
+      localStorage.setItem("boosapp_apikey", settings.anthropic.apiKey);
+      localStorage.setItem("boosapp_model",  settings.anthropic.model);
+      localStorage.setItem("boosapp_openai_key",   settings.openai.apiKey);
+      localStorage.setItem("boosapp_openai_model", settings.openai.model);
     }
+    const currentProvider = () => settings[settings.provider];
     function saveHistory() {
       sessionStorage.setItem("boosapp_history", JSON.stringify(history.slice(-20)));
     }
@@ -1486,7 +1551,9 @@
     const settingsBody  = $("settingsBody");
     const settingsArrow = $("settingsArrow");
     const aiToggle      = $("aiToggle");
+    const providerSelect = $("providerSelect");
     const apiKeyInput   = $("apiKey");
+    const apiKeyLink    = $("apiKeyLink");
     const modelSelect   = $("modelSelect");
 
     $("settingsToggle").addEventListener("click", () => {
@@ -1494,11 +1561,31 @@
       settingsArrow.textContent = hidden ? "▾" : "▴";
     });
 
+    function applyProviderUI() {
+      const p = PROVIDERS[settings.provider];
+      const lang = state.language;
+      apiKeyInput.placeholder = p.keyPlaceholder;
+      apiKeyInput.value = currentProvider().apiKey;
+      if (apiKeyLink) {
+        apiKeyLink.href = p.helpUrl;
+        apiKeyLink.textContent = p.helpUrlLabel + " " + p.helpExtra;
+      }
+      // Modellen dynamisch vullen voor huidige provider + taal
+      modelSelect.innerHTML = "";
+      p.models.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.value;
+        opt.textContent = m.label[lang] || m.label.en || m.label.nl;
+        modelSelect.appendChild(opt);
+      });
+      modelSelect.value = currentProvider().model;
+    }
+
     function syncSettingsUI() {
       aiToggle.classList.toggle("on", settings.aiMode);
       aiToggle.setAttribute("aria-checked", settings.aiMode ? "true" : "false");
-      apiKeyInput.value = settings.apiKey;
-      modelSelect.value = settings.model;
+      providerSelect.value = settings.provider;
+      applyProviderUI();
     }
     syncSettingsUI();
 
@@ -1506,18 +1593,23 @@
       settings.aiMode = !settings.aiMode;
       saveSettings();
       syncSettingsUI();
-      if (settings.aiMode && !settings.apiKey) {
+      if (settings.aiMode && !currentProvider().apiKey) {
         settingsBody.classList.remove("hidden");
         settingsArrow.textContent = "▴";
         apiKeyInput.focus();
       }
     });
+    providerSelect.addEventListener("change", () => {
+      settings.provider = providerSelect.value;
+      saveSettings();
+      applyProviderUI();
+    });
     apiKeyInput.addEventListener("change", () => {
-      settings.apiKey = apiKeyInput.value.trim();
+      currentProvider().apiKey = apiKeyInput.value.trim();
       saveSettings();
     });
     modelSelect.addEventListener("change", () => {
-      settings.model = modelSelect.value;
+      currentProvider().model = modelSelect.value;
       saveSettings();
     });
     $("clearChat").addEventListener("click", clearChatHistory);
@@ -1533,16 +1625,17 @@
     }
 
     async function callClaude() {
+      const conf = settings.anthropic;
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          "x-api-key": settings.apiKey,
+          "x-api-key": conf.apiKey,
           "anthropic-version": "2023-06-01",
           "anthropic-dangerous-direct-browser-access": "true",
           "content-type": "application/json"
         },
         body: JSON.stringify({
-          model: settings.model,
+          model: conf.model,
           max_tokens: 200,
           system: [{
             type: "text",
@@ -1555,11 +1648,42 @@
       if (!res.ok) {
         let detail = "";
         try { detail = (await res.json())?.error?.message || ""; } catch {}
-        throw new Error(`API ${res.status}${detail ? ": " + detail : ""}`);
+        throw new Error(`Anthropic ${res.status}${detail ? ": " + detail : ""}`);
       }
       const data = await res.json();
       const text = data.content?.find(c => c.type === "text")?.text?.trim() || "...";
       return text;
+    }
+
+    async function callOpenAI() {
+      const conf = settings.openai;
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + conf.apiKey,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: conf.model,
+          max_tokens: 200,
+          messages: [
+            { role: "system", content: systemPromptForMode(state.mode, state.language) },
+            ...history.map(m => ({ role: m.role, content: m.content }))
+          ]
+        })
+      });
+      if (!res.ok) {
+        let detail = "";
+        try { detail = (await res.json())?.error?.message || ""; } catch {}
+        throw new Error(`OpenAI ${res.status}${detail ? ": " + detail : ""}`);
+      }
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content?.trim() || "...";
+      return text;
+    }
+
+    async function callAI() {
+      return settings.provider === "openai" ? callOpenAI() : callClaude();
     }
 
     // === Achtergrondmuziek (Web Audio synth, geen bestanden nodig) ===
