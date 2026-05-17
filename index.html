@@ -87,20 +87,46 @@
       50%      { transform: translateY(-2px); }
     }
 
-    /* response bubble */
-    .response {
-      min-height: 60px; padding: 16px 18px;
-      font-size: 1.15rem; line-height: 1.5;
-      border-radius: 14px; background: var(--bg);
-      border: 1px solid var(--soft);
-      transition: background .3s;
+    /* chat-bubbels */
+    .chat {
+      display: flex; flex-direction: column; gap: 8px;
+      max-height: 55vh; overflow-y: auto;
+      scroll-behavior: smooth;
+      padding: 2px;
     }
-    .response.empty { color: var(--muted); font-style: italic; }
-    .response.pop { animation: pop .35s ease-out; }
-    @keyframes pop {
-      0%   { transform: scale(.96); opacity: .6; }
-      60%  { transform: scale(1.02); }
-      100% { transform: scale(1); opacity: 1; }
+    .chat:empty { display: none; }
+    .msg {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 1.05rem;
+      line-height: 1.45;
+      word-wrap: break-word;
+      animation: bubbleIn .25s ease-out;
+    }
+    .msg.assistant {
+      align-self: flex-start;
+      background: var(--bg);
+      border: 1px solid var(--soft);
+      border-bottom-left-radius: 4px;
+      color: var(--text);
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.typing { color: var(--muted); padding: 12px 14px; }
+    .empty-state {
+      padding: 8px 4px;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .empty-state.hidden { display: none; }
+    @keyframes bubbleIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     /* input */
@@ -226,8 +252,11 @@
     </div>
 
     <div class="card">
-      <div class="response empty" id="response" data-i18n="response_empty">Typ iets of druk op de microfoon...</div>
-      <div class="examples" id="examples"></div>
+      <div class="chat" id="chat"></div>
+      <div class="empty-state" id="emptyState">
+        <div data-i18n="response_empty">Typ iets of druk op de microfoon...</div>
+        <div class="examples" id="examples"></div>
+      </div>
     </div>
 
     <div class="card">
@@ -787,17 +816,15 @@
       if (tb) tb.textContent = (state.theme === "light") ? T.theme_dark : T.theme_light;
       const musb = document.getElementById("musicBtn");
       if (musb) musb.title = musicOn ? T.music_on_title : T.music_off_title;
-      const resp = document.getElementById("response");
-      if (resp && resp.classList.contains("empty")) resp.textContent = T.response_empty;
       document.documentElement.lang = state.language;
       renderExamples();
     }
 
     function renderExamples() {
       const ex = document.getElementById("examples");
-      const resp = document.getElementById("response");
-      if (!ex || !resp) return;
-      if (!resp.classList.contains("empty")) {
+      const chatEl = document.getElementById("chat");
+      if (!ex || !chatEl) return;
+      if (chatEl.children.length > 0) {
         ex.classList.add("hidden");
         return;
       }
@@ -817,7 +844,6 @@
 
     const $ = (id) => document.getElementById(id);
     const avatar = $("avatar");
-    const responseEl = $("response");
 
     // Donker / licht
     $("themeBtn").addEventListener("click", () => {
@@ -958,12 +984,47 @@
       }, 250);
     }
 
-    function showResponse(text) {
-      responseEl.textContent = text;
-      responseEl.classList.remove("empty", "pop");
-      void responseEl.offsetWidth;
-      responseEl.classList.add("pop");
-      renderExamples();
+    function addMessage(role, text, opts) {
+      opts = opts || {};
+      const chatEl = $("chat");
+      const b = document.createElement("div");
+      b.className = "msg " + role + (opts.typing ? " typing" : "");
+      if (opts.typing) {
+        const d = document.createElement("span");
+        d.className = "dots";
+        b.appendChild(d);
+      } else {
+        b.textContent = text;
+      }
+      chatEl.appendChild(b);
+      $("emptyState").classList.add("hidden");
+      requestAnimationFrame(() => { chatEl.scrollTop = chatEl.scrollHeight; });
+      return b;
+    }
+
+    function syncEmptyState() {
+      const chatEl = $("chat");
+      const emptyEl = $("emptyState");
+      if (!chatEl.children.length) {
+        emptyEl.classList.remove("hidden");
+        renderExamples();
+      } else {
+        emptyEl.classList.add("hidden");
+      }
+    }
+
+    function renderHistory() {
+      const chatEl = $("chat");
+      chatEl.innerHTML = "";
+      (history || []).forEach(m => addMessage(m.role, m.content));
+      syncEmptyState();
+    }
+
+    function clearChatHistory() {
+      history = [];
+      saveHistory();
+      $("chat").innerHTML = "";
+      syncEmptyState();
     }
 
     function randomReply() {
@@ -973,22 +1034,32 @@
     }
 
     async function reply(userText) {
+      history.push({ role: "user", content: userText });
+      if (history.length > 40) history = history.slice(-40);
+      addMessage("user", userText);
+      saveHistory();
+
       if (settings.aiMode && settings.apiKey) {
-        responseEl.classList.remove("empty", "pop");
-        responseEl.innerHTML = '<span class="dots"></span>';
+        const typing = addMessage("assistant", "", { typing: true });
         avatar.classList.add("speaking");
         try {
-          const text = await callClaude(userText);
+          const text = await callClaude();
+          typing.remove();
           avatar.classList.remove("speaking");
-          showResponse(text);
+          addMessage("assistant", text);
+          history.push({ role: "assistant", content: text });
+          saveHistory();
           speak(text);
         } catch (e) {
+          typing.remove();
           avatar.classList.remove("speaking");
-          showResponse(T.err_api + e.message);
+          addMessage("assistant", T.err_api + e.message);
         }
       } else {
         const text = randomReply();
-        showResponse(text);
+        addMessage("assistant", text);
+        history.push({ role: "assistant", content: text });
+        saveHistory();
         speak(text);
       }
     }
@@ -1093,11 +1164,7 @@
       settings.model = modelSelect.value;
       saveSettings();
     });
-    $("clearChat").addEventListener("click", () => {
-      history = [];
-      saveHistory();
-      showResponse(T.response_cleared);
-    });
+    $("clearChat").addEventListener("click", clearChatHistory);
 
     function systemPromptForMode(mode, lang) {
       const langName = LANG_NAMES[lang] || "Dutch";
@@ -1109,10 +1176,7 @@
       return base + " You tease the user with mild, culturally appropriate insults in the chosen language (e.g. in Dutch: sukkel/mafkees/oen/pannenkoek; English: doofus/numpty/knucklehead; German: Trottel/Tollpatsch/Schussel; French: nigaud/andouille/cornichon). It may be punchy but never genuinely hurtful; nothing about appearance, family, religion, sexuality or identity.";
     }
 
-    async function callClaude(userText) {
-      history.push({ role: "user", content: userText });
-      if (history.length > 20) history = history.slice(-20);
-
+    async function callClaude() {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -1139,8 +1203,6 @@
       }
       const data = await res.json();
       const text = data.content?.find(c => c.type === "text")?.text?.trim() || "...";
-      history.push({ role: "assistant", content: text });
-      saveHistory();
       return text;
     }
 
@@ -1226,6 +1288,7 @@
     // Initiele UI-vertaling toepassen (na mic + muziek-setup zodat alles juiste taal krijgt)
     applyUI();
     updateMusicBtn();
+    renderHistory();
   </script>
 </body>
 </html>
