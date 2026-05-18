@@ -129,6 +129,80 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* Papier scheuren */
+    .tear-overlay {
+      position: fixed; inset: 0;
+      background: rgba(18, 22, 35, 0.92);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 24px;
+      z-index: 1000;
+      user-select: none;
+      animation: fadeIn 0.4s ease-out;
+    }
+    .tear-overlay.open { display: flex; }
+    .tear-stage {
+      position: relative;
+      width: 300px; height: 420px;
+      touch-action: none;
+    }
+    .tear-half {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      background:
+        repeating-linear-gradient(transparent 0 32px, rgba(150, 130, 80, 0.10) 32px 33px),
+        linear-gradient(180deg, #fdf6d6, #f5edc7);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+      transition: none;
+      transform: none;
+      opacity: 1;
+    }
+    .tear-half.top {
+      top: 0;
+      height: 55%;
+      clip-path: polygon(
+        0% 0%, 100% 0%, 100% 95%,
+        96% 90%, 92% 97%, 88% 91%, 84% 96%, 80% 89%, 76% 95%,
+        72% 91%, 68% 97%, 64% 90%, 60% 96%, 56% 89%, 52% 95%, 48% 91%,
+        44% 96%, 40% 90%, 36% 95%, 32% 89%, 28% 96%, 24% 91%, 20% 97%,
+        16% 90%, 12% 95%, 8% 91%, 4% 96%, 0% 90%
+      );
+    }
+    .tear-half.bottom {
+      bottom: 0;
+      height: 55%;
+      clip-path: polygon(
+        0% 10%, 4% 4%, 8% 9%, 12% 5%, 16% 10%, 20% 3%, 24% 9%, 28% 4%,
+        32% 11%, 36% 5%, 40% 10%, 44% 4%, 48% 11%, 52% 5%, 56% 10%, 60% 4%,
+        64% 11%, 68% 3%, 72% 9%, 76% 5%, 80% 11%, 84% 4%, 88% 10%, 92% 3%, 96% 10%, 100% 5%,
+        100% 100%, 0% 100%
+      );
+    }
+    .tear-paper {
+      position: relative;
+      width: 100%; height: 100%;
+      cursor: grab;
+    }
+    .tear-paper:active { cursor: grabbing; }
+
+    .tear-paper.torn .tear-half {
+      transition: transform 0.8s cubic-bezier(.45,.05,.55,.95), opacity 0.6s ease-out 0.2s;
+      opacity: 0;
+    }
+    .tear-paper.torn .tear-half.top {
+      transform: translate(-40px, 480px) rotate(-18deg);
+    }
+    .tear-paper.torn .tear-half.bottom {
+      transform: translate(40px, 480px) rotate(16deg);
+    }
+    .tear-hint {
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
     /* Adem-overlay */
     .breath-overlay {
       position: fixed; inset: 0;
@@ -301,6 +375,7 @@
   <header>
     <h1>🫧 BoosApp</h1>
     <div class="header-actions">
+      <button class="theme-btn icon-only" id="tearBtn" title="Papier scheuren" aria-label="Papier scheuren">📄</button>
       <button class="theme-btn icon-only" id="breathBtn" title="Adem mee" aria-label="Adem mee">🫁</button>
       <button class="theme-btn icon-only" id="musicBtn" title="Muziek aan/uit">🔇</button>
       <button class="theme-btn" id="themeBtn">🌙 Donker</button>
@@ -410,6 +485,17 @@
       </div>
     </div>
   </main>
+
+  <div class="tear-overlay" id="tearOverlay" role="dialog" aria-modal="true">
+    <div class="tear-stage">
+      <div class="tear-paper" id="tearPaper">
+        <div class="tear-half top"></div>
+        <div class="tear-half bottom"></div>
+      </div>
+    </div>
+    <div class="tear-hint" data-i18n="tear_hint">Sleep over het papier om te scheuren</div>
+    <button class="breath-close" id="tearClose" data-i18n="breath_close">Stop</button>
+  </div>
 
   <div class="breath-overlay" id="breathOverlay" role="dialog" aria-modal="true" aria-labelledby="breathLabel">
     <div class="breath-circle" id="breathCircle"></div>
@@ -1309,7 +1395,9 @@
         sound_music: "Zachte muziek", sound_rain: "Regen", sound_sea: "Zee",
         breath_button_title: "Adem mee",
         breath_inhale: "Inadem...", breath_hold: "Vasthouden...", breath_exhale: "Uitadem...",
-        breath_close: "Stop"
+        breath_close: "Stop",
+        tear_button_title: "Papier scheuren",
+        tear_hint: "Sleep over het papier om te scheuren"
       },
       en: {
         theme_dark: "🌙 Dark", theme_light: "☀️ Light",
@@ -1340,7 +1428,9 @@
         sound_music: "Soft music", sound_rain: "Rain", sound_sea: "Sea",
         breath_button_title: "Breathe with me",
         breath_inhale: "Breathe in...", breath_hold: "Hold...", breath_exhale: "Breathe out...",
-        breath_close: "Stop"
+        breath_close: "Stop",
+        tear_button_title: "Tear paper",
+        tear_hint: "Swipe across the paper to tear it"
       },
       de: {
         theme_dark: "🌙 Dunkel", theme_light: "☀️ Hell",
@@ -1371,7 +1461,9 @@
         sound_music: "Sanfte Musik", sound_rain: "Regen", sound_sea: "Meer",
         breath_button_title: "Atme mit",
         breath_inhale: "Einatmen...", breath_hold: "Halten...", breath_exhale: "Ausatmen...",
-        breath_close: "Stopp"
+        breath_close: "Stopp",
+        tear_button_title: "Papier zerreißen",
+        tear_hint: "Wisch über das Papier, um es zu zerreißen"
       },
       fr: {
         theme_dark: "🌙 Sombre", theme_light: "☀️ Clair",
@@ -1402,7 +1494,9 @@
         sound_music: "Musique douce", sound_rain: "Pluie", sound_sea: "Mer",
         breath_button_title: "Respire avec moi",
         breath_inhale: "Inspire...", breath_hold: "Retiens...", breath_exhale: "Expire...",
-        breath_close: "Arrêter"
+        breath_close: "Arrêter",
+        tear_button_title: "Déchirer le papier",
+        tear_hint: "Glisse sur le papier pour le déchirer"
       }
     };
     let T = ui.nl;
@@ -1426,6 +1520,8 @@
       if (musb) musb.title = musicOn ? T.music_on_title : T.music_off_title;
       const brb = document.getElementById("breathBtn");
       if (brb) { brb.title = T.breath_button_title; brb.setAttribute("aria-label", T.breath_button_title); }
+      const tb2 = document.getElementById("tearBtn");
+      if (tb2) { tb2.title = T.tear_button_title; tb2.setAttribute("aria-label", T.tear_button_title); }
       document.documentElement.lang = state.language;
       renderExamples();
       // Werk de model-labels in de provider-UI bij (afhankelijk van taal)
@@ -2079,6 +2175,75 @@
       };
       document.addEventListener("click", starter);
     }
+
+    // === Papier scheuren ===
+    const tearPaper = $("tearPaper");
+    const tearOverlay = $("tearOverlay");
+    let tearDrag = null;
+
+    function openTear() {
+      tearOverlay.classList.add("open");
+      tearPaper.classList.remove("torn");
+    }
+    function closeTear() {
+      tearOverlay.classList.remove("open");
+      tearPaper.classList.remove("torn");
+      tearDrag = null;
+    }
+
+    function playTearSound() {
+      const ctx = ensureAudio();
+      const dur = 0.45;
+      const buf = makeNoiseBuffer(ctx, dur);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass"; bp.frequency.value = 2800; bp.Q.value = 1.6;
+      const g = ctx.createGain();
+      g.gain.value = 0;
+      src.connect(bp).connect(g).connect(ctx.destination);
+      const t = ctx.currentTime;
+      g.gain.linearRampToValueAtTime(0.45, t + 0.02);
+      g.gain.linearRampToValueAtTime(0,    t + dur);
+      bp.frequency.linearRampToValueAtTime(700, t + dur);
+      src.start(t);
+      src.stop(t + dur);
+    }
+
+    function doTear() {
+      if (tearPaper.classList.contains("torn")) return;
+      tearPaper.classList.add("torn");
+      playTearSound();
+      // Na de animatie: snap terug naar heel papier (zonder transition)
+      setTimeout(() => { tearPaper.classList.remove("torn"); }, 1100);
+    }
+
+    tearPaper.addEventListener("pointerdown", (e) => {
+      if (tearPaper.classList.contains("torn")) return;
+      tearDrag = { x: e.clientX, y: e.clientY };
+      try { tearPaper.setPointerCapture(e.pointerId); } catch {}
+    });
+    tearPaper.addEventListener("pointermove", (e) => {
+      if (!tearDrag) return;
+      const dx = e.clientX - tearDrag.x;
+      const dy = e.clientY - tearDrag.y;
+      if (Math.hypot(dx, dy) > 90) {
+        doTear();
+        tearDrag = null;
+      }
+    });
+    const endDrag = () => { tearDrag = null; };
+    tearPaper.addEventListener("pointerup", endDrag);
+    tearPaper.addEventListener("pointercancel", endDrag);
+
+    $("tearBtn").addEventListener("click", openTear);
+    $("tearClose").addEventListener("click", closeTear);
+    tearOverlay.addEventListener("click", (e) => {
+      if (e.target.id === "tearOverlay") closeTear();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && tearOverlay.classList.contains("open")) closeTear();
+    });
 
     // === Ademhalingscirkel (4-7-8) ===
     let breathStart = 0;
