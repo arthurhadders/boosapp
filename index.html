@@ -1095,6 +1095,109 @@
       }
     };
 
+    // Detectie van geweld-intentie ("ik ga hem slaan", "vermoorden", etc.)
+    // → leidt naar cathartische zinnen die woede valideren maar verbaal uitten aanmoedigen
+    const VIOLENT_INTENT_KEYWORDS = {
+      nl: ["slaan","sloeg","slaande","schoppen","schopte","vermoorden","doodmaken","afmaken","aftuigen","verbouwen","mishandelen","verwurgen","wurg","opknopen"],
+      en: ["hit","hitting","punch","punching","kick","kicking","kill","killing","murder","strangle","strangling","beat","beating","smash","stab"],
+      de: ["schlagen","töten","ermorden","umbringen","prügeln","verprügeln","würgen","fertigmachen","abreißen"],
+      fr: ["frapper","tuer","tabasser","étrangler","cogner","massacrer","battre","démolir"]
+    };
+
+    function hasViolentIntent(text, lang) {
+      if (!text) return false;
+      const kws = VIOLENT_INTENT_KEYWORDS[lang] || VIOLENT_INTENT_KEYWORDS.nl;
+      const tokens = text.toLowerCase().split(/[\s.,!?;:'"„""()\-—]+/).filter(Boolean);
+      for (const k of kws) {
+        if (k.length <= 3 ? tokens.includes(k) : tokens.some(t => t.startsWith(k))) return true;
+      }
+      return false;
+    }
+
+    // Antwoorden die de woede erkennen maar terugleiden naar verbaal uiten
+    const violentIntentResponses = {
+      nl: {
+        lief: [
+          "Hé, niet doen. Adem rustig en vertel maar wat er gebeurd is.",
+          "Begrijp dat je woedend bent, maar handen thuis. Wat speelt er?",
+          "Laten we het rustig houden — vertel maar, ik luister.",
+          "Geen geweld — schreeuw maar tegen mij als dat helpt."
+        ],
+        boos: [
+          "Schreeuw maar tegen MIJ — geen vuisten!",
+          "Begrijp je woede! Gebruik je stem, niet je handen.",
+          "Verzin liever een vlammend scheldwoord dan een klap.",
+          "Tier het er maar uit hier — slaan helpt nooit."
+        ],
+        schelden: [
+          "Niet slaan! Schelden mag wel — ga je gang!",
+          "Vuisten lossen niks op — lekker uittieren hier!",
+          "Wraak nemen door hem keihard uit te schelden — kom op!",
+          "Sodemieter op met dat slaan — een scheldkanonnade is veel beter!"
+        ]
+      },
+      en: {
+        lief: [
+          "Hey, don't. Breathe slowly and tell me what happened.",
+          "I get that you're furious, but keep your hands to yourself. What's going on?",
+          "Let's keep it calm — tell me, I'm listening.",
+          "No violence — yell at me instead if it helps."
+        ],
+        boos: [
+          "Yell at ME — don't use your fists!",
+          "I get the anger! Use your voice, not your hands.",
+          "Come up with a fiery insult instead of a punch.",
+          "Let it out here — hitting never helps."
+        ],
+        schelden: [
+          "Don't hit! Cursing is fine — go for it!",
+          "Fists solve nothing — just rant it out!",
+          "Take revenge by cursing them out — come on!",
+          "Forget the hitting — a proper rant here is way better!"
+        ]
+      },
+      de: {
+        lief: [
+          "Hey, nicht. Atme ruhig und erzähl, was passiert ist.",
+          "Ich verstehe deine Wut, aber Hände weg. Was läuft?",
+          "Bleiben wir ruhig — erzähl, ich höre zu.",
+          "Keine Gewalt — schrei lieber mich an."
+        ],
+        boos: [
+          "Schrei MICH an — keine Fäuste!",
+          "Ich verstehe die Wut! Stimme, keine Hände.",
+          "Erfinde lieber ein flammendes Schimpfwort als einen Schlag.",
+          "Lass es hier raus — Schlagen hilft nie."
+        ],
+        schelden: [
+          "Nicht schlagen! Schimpfen ist okay — leg los!",
+          "Fäuste lösen nichts — schrei's lieber raus!",
+          "Räch dich durch Beschimpfen — komm schon!",
+          "Hau ab mit dem Schlagen — eine richtige Schimpftirade hier ist viel besser!"
+        ]
+      },
+      fr: {
+        lief: [
+          "Hé, ne fais pas ça. Respire et raconte-moi ce qui s'est passé.",
+          "Je comprends ta colère, mais pas les mains. Qu'est-ce qui se passe?",
+          "Gardons notre calme — raconte, je t'écoute.",
+          "Pas de violence — crie sur moi à la place si ça aide."
+        ],
+        boos: [
+          "Crie sur MOI — pas avec tes poings!",
+          "Je comprends la colère! Ta voix, pas tes mains.",
+          "Invente une insulte cinglante plutôt qu'un coup.",
+          "Lâche-toi ici — frapper n'aide jamais."
+        ],
+        schelden: [
+          "Pas de coup! Insulter, c'est okay — vas-y!",
+          "Les poings ne résolvent rien — sors-le verbalement!",
+          "Venge-toi en l'insultant à fond — allez!",
+          "Laisse tomber les coups — une bonne engueulade ici, c'est mille fois mieux!"
+        ]
+      }
+    };
+
     function detectPerson(text, lang) {
       if (!text) return null;
       // 1) Familie-relatie via lowercase token-match
@@ -1522,6 +1625,11 @@
     function randomReply(userText) {
       const lang = state.language;
       const mode = state.mode;
+      // 0) Geweld-intentie: valideer woede maar leid terug naar verbaal uiten
+      if (hasViolentIntent(userText || "", lang)) {
+        const pool = (violentIntentResponses[lang] || violentIntentResponses.nl)[mode];
+        if (pool && pool.length) return pool[Math.floor(Math.random() * pool.length)];
+      }
       // 1) Persoon-vermelding heeft voorrang: vraag erover door
       const person = detectPerson(userText || "", lang);
       if (person) {
