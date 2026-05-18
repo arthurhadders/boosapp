@@ -129,6 +129,22 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* Rustige modus: zachtere kleuren, tragere animaties */
+    body[data-calm="true"] {
+      --accent: #9bb1d6;
+      --bg: #eef2f7;
+      --soft: #dde4ee;
+    }
+    body[data-calm="true"][data-theme="dark"] {
+      --accent: #6f7fa0;
+      --bg: #14181f;
+      --soft: #232a35;
+    }
+    body[data-calm="true"] .msg          { animation-duration: 0.9s; }
+    body[data-calm="true"] .avatar.speaking { animation-duration: 4s; }
+    body[data-calm="true"] .card         { animation-duration: 1.2s; }
+    body[data-calm="true"] * { transition-duration: 0.6s; }
+
     /* input */
     .input-row { display: flex; gap: 8px; }
     .input-row input {
@@ -305,6 +321,18 @@
         <div class="row">
           <label for="aiToggle" data-i18n="settings_ai_label">AI-modus (echte gesprekken)</label>
           <button class="switch" id="aiToggle" role="switch" aria-checked="false" aria-label="AI"></button>
+        </div>
+        <div class="row">
+          <label for="calmToggle" data-i18n="settings_calm_label">Rustige modus</label>
+          <button class="switch" id="calmToggle" role="switch" aria-checked="false" aria-label="Rustig"></button>
+        </div>
+        <div class="field">
+          <label for="soundSelect" data-i18n="settings_sound_label">Geluid</label>
+          <select id="soundSelect">
+            <option value="music" data-i18n="sound_music">Zachte muziek</option>
+            <option value="rain"  data-i18n="sound_rain">Regen</option>
+            <option value="sea"   data-i18n="sound_sea">Zee</option>
+          </select>
         </div>
         <div class="field">
           <label for="providerSelect" data-i18n="settings_provider_label">Provider</label>
@@ -1216,7 +1244,10 @@
         btn_clear: "🗑️ Wis gesprek-geheugen",
         err_api: "Oeps, kon Claude niet bereiken. ",
         examples: ["Ik ben moe", "Ik moet aan een taak beginnen", "Ik voel me lullig"],
-        music_on_title: "Muziek uitzetten", music_off_title: "Muziek aanzetten"
+        music_on_title: "Geluid uitzetten", music_off_title: "Geluid aanzetten",
+        settings_calm_label: "Rustige modus",
+        settings_sound_label: "Geluid",
+        sound_music: "Zachte muziek", sound_rain: "Regen", sound_sea: "Zee"
       },
       en: {
         theme_dark: "🌙 Dark", theme_light: "☀️ Light",
@@ -1241,7 +1272,10 @@
         btn_clear: "🗑️ Clear conversation memory",
         err_api: "Oops, couldn't reach Claude. ",
         examples: ["I'm tired", "I need to start a task", "I'm feeling down"],
-        music_on_title: "Turn music off", music_off_title: "Turn music on"
+        music_on_title: "Turn sound off", music_off_title: "Turn sound on",
+        settings_calm_label: "Calm mode",
+        settings_sound_label: "Sound",
+        sound_music: "Soft music", sound_rain: "Rain", sound_sea: "Sea"
       },
       de: {
         theme_dark: "🌙 Dunkel", theme_light: "☀️ Hell",
@@ -1266,7 +1300,10 @@
         btn_clear: "🗑️ Gesprächsverlauf löschen",
         err_api: "Hoppla, Claude nicht erreichbar. ",
         examples: ["Ich bin müde", "Ich muss eine Aufgabe anfangen", "Mir geht's mies"],
-        music_on_title: "Musik ausschalten", music_off_title: "Musik einschalten"
+        music_on_title: "Ton ausschalten", music_off_title: "Ton einschalten",
+        settings_calm_label: "Ruhemodus",
+        settings_sound_label: "Klang",
+        sound_music: "Sanfte Musik", sound_rain: "Regen", sound_sea: "Meer"
       },
       fr: {
         theme_dark: "🌙 Sombre", theme_light: "☀️ Clair",
@@ -1291,7 +1328,10 @@
         btn_clear: "🗑️ Effacer la mémoire",
         err_api: "Oups, impossible d'atteindre Claude. ",
         examples: ["Je suis fatigué", "Je dois commencer un devoir", "Je me sens mal"],
-        music_on_title: "Désactiver la musique", music_off_title: "Activer la musique"
+        music_on_title: "Couper le son", music_off_title: "Activer le son",
+        settings_calm_label: "Mode calme",
+        settings_sound_label: "Son",
+        sound_music: "Musique douce", sound_rain: "Pluie", sound_sea: "Mer"
       }
     };
     let T = ui.nl;
@@ -1795,11 +1835,11 @@
       return settings.provider === "openai" ? callOpenAI() : callClaude();
     }
 
-    // === Achtergrondmuziek (Web Audio synth, geen bestanden nodig) ===
+    // === Achtergrondgeluid (Web Audio synth, geen bestanden nodig) ===
     let musicOn = localStorage.getItem("boosapp_music") === "1";
+    let soundType = localStorage.getItem("boosapp_sound") || "music";
     let audioCtx = null;
-    let musicMaster = null;
-    let musicNodes = [];
+    let activeSound = null;  // { master, nodes: [] }
 
     function ensureAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1807,15 +1847,13 @@
       return audioCtx;
     }
 
-    function startMusic() {
-      if (musicNodes.length) return;
-      const ctx = ensureAudio();
-      musicMaster = ctx.createGain();
-      musicMaster.gain.value = 0;
-      musicMaster.connect(ctx.destination);
-      musicMaster.gain.linearRampToValueAtTime(0.10, ctx.currentTime + 2.5);
-      // Cmaj9 spread — kalmerend akkoord met zachte LFO's
+    function makeMusic(ctx) {
+      const master = ctx.createGain();
+      master.gain.value = 0;
+      master.connect(ctx.destination);
+      master.gain.linearRampToValueAtTime(0.10, ctx.currentTime + 2.5);
       const freqs = [130.81, 196.00, 261.63, 329.63, 392.00, 587.33];
+      const nodes = [];
       freqs.forEach((f, i) => {
         const osc = ctx.createOscillator();
         osc.type = i < 2 ? "triangle" : "sine";
@@ -1828,22 +1866,90 @@
         const lfoGain = ctx.createGain();
         lfoGain.gain.value = base * 0.5;
         lfo.connect(lfoGain).connect(g.gain);
-        osc.connect(g).connect(musicMaster);
+        osc.connect(g).connect(master);
         osc.start();
         lfo.start();
-        musicNodes.push(osc, lfo);
+        nodes.push(osc, lfo);
       });
+      return { master, nodes };
     }
 
-    function stopMusic() {
-      if (!musicMaster || !audioCtx) return;
+    function makeNoiseBuffer(ctx, durationSec) {
+      const len = ctx.sampleRate * durationSec;
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      return buf;
+    }
+
+    function makeBrownNoiseBuffer(ctx, durationSec) {
+      const len = ctx.sampleRate * durationSec;
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      let lastOut = 0;
+      for (let i = 0; i < len; i++) {
+        const white = Math.random() * 2 - 1;
+        lastOut = (lastOut + 0.02 * white) / 1.02;
+        data[i] = lastOut * 3.5;
+      }
+      return buf;
+    }
+
+    function makeRain(ctx) {
+      const master = ctx.createGain();
+      master.gain.value = 0;
+      master.connect(ctx.destination);
+      master.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 2);
+      const noise = ctx.createBufferSource();
+      noise.buffer = makeNoiseBuffer(ctx, 2);
+      noise.loop = true;
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 900;
+      const lp = ctx.createBiquadFilter();
+      lp.type = "lowpass";  lp.frequency.value = 4500;
+      noise.connect(hp).connect(lp).connect(master);
+      noise.start();
+      return { master, nodes: [noise] };
+    }
+
+    function makeSea(ctx) {
+      const master = ctx.createGain();
+      master.gain.value = 0;
+      master.connect(ctx.destination);
+      master.gain.linearRampToValueAtTime(0.22, ctx.currentTime + 3);
+      const noise = ctx.createBufferSource();
+      noise.buffer = makeBrownNoiseBuffer(ctx, 4);
+      noise.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = "lowpass"; lp.frequency.value = 650;
+      noise.connect(lp).connect(master);
+      noise.start();
+      // golven via LFO op de master gain
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.12;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 0.08;
+      lfo.connect(lfoGain).connect(master.gain);
+      lfo.start();
+      return { master, nodes: [noise, lfo] };
+    }
+
+    function startSound() {
+      stopSound();
+      if (!musicOn) return;
+      const ctx = ensureAudio();
+      if (soundType === "rain")      activeSound = makeRain(ctx);
+      else if (soundType === "sea")  activeSound = makeSea(ctx);
+      else                            activeSound = makeMusic(ctx);
+    }
+
+    function stopSound() {
+      if (!activeSound || !audioCtx) return;
       const ctx = audioCtx;
-      musicMaster.gain.cancelScheduledValues(ctx.currentTime);
-      musicMaster.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
-      const nodes = musicNodes.slice();
-      const master = musicMaster;
-      musicNodes = [];
-      musicMaster = null;
+      const { master, nodes } = activeSound;
+      activeSound = null;
+      master.gain.cancelScheduledValues(ctx.currentTime);
+      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
       setTimeout(() => {
         nodes.forEach(n => { try { n.stop(); } catch {} });
         try { master.disconnect(); } catch {}
@@ -1860,15 +1966,42 @@
     $("musicBtn").addEventListener("click", () => {
       musicOn = !musicOn;
       localStorage.setItem("boosapp_music", musicOn ? "1" : "0");
-      if (musicOn) startMusic(); else stopMusic();
+      if (musicOn) startSound(); else stopSound();
       updateMusicBtn();
     });
 
+    // Geluidkeuze
+    const soundSelect = $("soundSelect");
+    if (soundSelect) {
+      soundSelect.value = soundType;
+      soundSelect.addEventListener("change", () => {
+        soundType = soundSelect.value;
+        localStorage.setItem("boosapp_sound", soundType);
+        if (musicOn) startSound();
+      });
+    }
+
+    // Rustige modus
+    let calmOn = localStorage.getItem("boosapp_calm") === "1";
+    document.body.dataset.calm = calmOn ? "true" : "false";
+    const calmToggle = $("calmToggle");
+    if (calmToggle) {
+      calmToggle.classList.toggle("on", calmOn);
+      calmToggle.setAttribute("aria-checked", calmOn ? "true" : "false");
+      calmToggle.addEventListener("click", () => {
+        calmOn = !calmOn;
+        localStorage.setItem("boosapp_calm", calmOn ? "1" : "0");
+        document.body.dataset.calm = calmOn ? "true" : "false";
+        calmToggle.classList.toggle("on", calmOn);
+        calmToggle.setAttribute("aria-checked", calmOn ? "true" : "false");
+      });
+    }
+
     // Browsers blokkeren AudioContext zonder user-gesture, dus bij herladen
-    // wachten we op de eerste klik ergens op de pagina om muziek te starten.
+    // wachten we op de eerste klik ergens op de pagina om geluid te starten.
     if (musicOn) {
       const starter = () => {
-        if (musicOn && !musicNodes.length) startMusic();
+        if (musicOn && !activeSound) startSound();
         document.removeEventListener("click", starter);
       };
       document.addEventListener("click", starter);
