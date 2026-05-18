@@ -1021,202 +1021,6 @@
       return null;
     }
 
-    // Familieleden/relaties — taal-specifiek
-    const FAMILY_RELATIONS = {
-      nl: ["vader","moeder","broer","zus","oma","opa","ma","pa","mam","pap","vriend","vriendin","baas","juf","leraar","collega","tante","oom","neef","nicht","partner","ouders","ex"],
-      en: ["father","mother","brother","sister","grandma","grandpa","mom","dad","mum","friend","boss","teacher","colleague","aunt","uncle","cousin","partner","parents","ex"],
-      de: ["vater","mutter","bruder","schwester","oma","opa","papa","mama","freund","freundin","chef","lehrer","kollege","tante","onkel","cousin","cousine","partner","eltern","ex"],
-      fr: ["père","mère","frère","sœur","maman","papa","ami","amie","patron","prof","collègue","tante","oncle","cousin","cousine","partenaire","parents","ex"]
-    };
-
-    // Veelvoorkomende hoofdletter-woorden die GEEN naam zijn (om valse hits te voorkomen)
-    const NAME_STOPWORDS = new Set([
-      // NL
-      "ik","wij","zij","hij","het","de","een","mijn","ons","onze","jij","jou","jouw","u","uw","mij","ze","we","je",
-      "vandaag","gisteren","morgen","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag","zondag",
-      // EN
-      "i","you","my","the","he","she","they","we","us","it","this","that","today","tomorrow","yesterday",
-      "monday","tuesday","wednesday","thursday","friday","saturday","sunday",
-      // DE
-      "ich","du","mein","der","die","das","ein","eine","er","sie","wir","ihr","heute","gestern","montag","dienstag","mittwoch","donnerstag","freitag","samstag","sonntag",
-      // FR
-      "tu","mon","ma","mes","le","la","les","un","une","il","elle","aujourd","hier","demain","lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"
-    ]);
-
-    // Antwoord-templates per taal × type × mode. {x} = gedetecteerd woord/naam.
-    const personResponses = {
-      nl: {
-        relation: {
-          lief: ["Wat is er met je {x}? Vertel maar.","Wat heeft je {x} gedaan? Ik luister.","Hoe is het tussen jou en je {x}?"],
-          boos: ["Wat heeft je {x} nu weer uitgevreten?","Wat is er gebeurd met je {x}? Vertel op!","Wat heeft je {x} fout gedaan?!"],
-          schelden: ["Heeft je {x} weer iets stoms gedaan, sukkel?","Vertel — wat heeft je {x} dit keer geflikt?","Spuug het uit: wat heeft je {x} gedaan, oen?"]
-        },
-        name: {
-          lief: ["Wat is er met {x}? Vertel maar.","Wat heeft {x} gedaan? Ik luister.","Wie is {x} voor jou?"],
-          boos: ["Wat heeft {x} verkeerd gedaan?","Vertel op, wat heeft {x} gedaan?","Wat heeft {x} nu weer uitgevreten?"],
-          schelden: ["Wat heeft die {x} nu weer gedaan, sukkel?","Spuug het uit: wat heeft {x} geflikt?","Vertel maar, wat heeft {x} gedaan, mafkees?"]
-        }
-      },
-      en: {
-        relation: {
-          lief: ["What's going on with your {x}? Tell me.","What did your {x} do? I'm listening.","How are things with your {x}?"],
-          boos: ["What did your {x} do this time?","What happened with your {x}? Spill it!","What did your {x} mess up?"],
-          schelden: ["Did your {x} pull something stupid, doofus?","Spill it — what did your {x} do this time?","Out with it: what did your {x} do, numpty?"]
-        },
-        name: {
-          lief: ["What's going on with {x}? Tell me.","What did {x} do? I'm listening.","Who is {x} to you?"],
-          boos: ["What did {x} do wrong?","Spill it, what did {x} do?","What did {x} screw up?"],
-          schelden: ["What did that {x} do now, doofus?","Spit it out: what did {x} pull?","Tell me, what did {x} do, numpty?"]
-        }
-      },
-      de: {
-        relation: {
-          lief: ["Was ist mit {x}? Erzähl.","Was hat {x} gemacht? Ich höre zu.","Wie läuft's mit {x}?"],
-          boos: ["Was hat {x} jetzt schon wieder angestellt?","Was ist mit {x} passiert? Spuck's aus!","Was hat {x} falsch gemacht?"],
-          schelden: ["Hat {x} wieder was Dummes gemacht, Trottel?","Spuck's aus — was hat {x} diesmal verbockt?","Sag schon: was hat {x} gemacht, Dödel?"]
-        },
-        name: {
-          lief: ["Was ist mit {x}? Erzähl.","Was hat {x} gemacht? Ich höre zu.","Wer ist {x} für dich?"],
-          boos: ["Was hat {x} falsch gemacht?","Spuck's aus, was hat {x} gemacht?","Was hat {x} verbockt?"],
-          schelden: ["Was hat {x} jetzt gemacht, Trottel?","Spuck's aus: was hat {x} gemacht?","Sag schon, was hat {x} gemacht, Dödel?"]
-        }
-      },
-      fr: {
-        relation: {
-          lief: ["Que se passe-t-il avec ton/ta {x}? Raconte.","Qu'a fait ton/ta {x}? Je t'écoute.","Comment ça va avec ton/ta {x}?"],
-          boos: ["Qu'a fait ton/ta {x} cette fois?","Qu'est-ce qui s'est passé avec ton/ta {x}? Crache!","Qu'a fait de mal ton/ta {x}?"],
-          schelden: ["Ton/ta {x} a encore fait une bêtise, nigaud?","Crache — qu'a fait ton/ta {x} cette fois?","Allez, qu'a fait ton/ta {x}, andouille?"]
-        },
-        name: {
-          lief: ["Que se passe-t-il avec {x}? Raconte.","Qu'a fait {x}? Je t'écoute.","Qui est {x} pour toi?"],
-          boos: ["Qu'a fait {x} de mal?","Crache, qu'a fait {x}?","Qu'a fait {x} encore?"],
-          schelden: ["Qu'a fait ce/cette {x} maintenant, nigaud?","Crache: qu'a fait {x}?","Allez, qu'a fait {x}, andouille?"]
-        }
-      }
-    };
-
-    // Detectie van geweld-intentie ("ik ga hem slaan", "vermoorden", etc.)
-    // → leidt naar cathartische zinnen die woede valideren maar verbaal uitten aanmoedigen
-    const VIOLENT_INTENT_KEYWORDS = {
-      nl: ["slaan","sloeg","slaande","schoppen","schopte","vermoorden","doodmaken","afmaken","aftuigen","verbouwen","mishandelen","verwurgen","wurg","opknopen"],
-      en: ["hit","hitting","punch","punching","kick","kicking","kill","killing","murder","strangle","strangling","beat","beating","smash","stab"],
-      de: ["schlagen","töten","ermorden","umbringen","prügeln","verprügeln","würgen","fertigmachen","abreißen"],
-      fr: ["frapper","tuer","tabasser","étrangler","cogner","massacrer","battre","démolir"]
-    };
-
-    function hasViolentIntent(text, lang) {
-      if (!text) return false;
-      const kws = VIOLENT_INTENT_KEYWORDS[lang] || VIOLENT_INTENT_KEYWORDS.nl;
-      const tokens = text.toLowerCase().split(/[\s.,!?;:'"„""()\-—]+/).filter(Boolean);
-      for (const k of kws) {
-        if (k.length <= 3 ? tokens.includes(k) : tokens.some(t => t.startsWith(k))) return true;
-      }
-      return false;
-    }
-
-    // Antwoorden die de woede erkennen maar terugleiden naar verbaal uiten
-    const violentIntentResponses = {
-      nl: {
-        lief: [
-          "Hé, niet doen. Adem rustig en vertel maar wat er gebeurd is.",
-          "Begrijp dat je woedend bent, maar handen thuis. Wat speelt er?",
-          "Laten we het rustig houden — vertel maar, ik luister.",
-          "Geen geweld — schreeuw maar tegen mij als dat helpt."
-        ],
-        boos: [
-          "Schreeuw maar tegen MIJ — geen vuisten!",
-          "Begrijp je woede! Gebruik je stem, niet je handen.",
-          "Verzin liever een vlammend scheldwoord dan een klap.",
-          "Tier het er maar uit hier — slaan helpt nooit."
-        ],
-        schelden: [
-          "Niet slaan! Schelden mag wel — ga je gang!",
-          "Vuisten lossen niks op — lekker uittieren hier!",
-          "Wraak nemen door hem keihard uit te schelden — kom op!",
-          "Sodemieter op met dat slaan — een scheldkanonnade is veel beter!"
-        ]
-      },
-      en: {
-        lief: [
-          "Hey, don't. Breathe slowly and tell me what happened.",
-          "I get that you're furious, but keep your hands to yourself. What's going on?",
-          "Let's keep it calm — tell me, I'm listening.",
-          "No violence — yell at me instead if it helps."
-        ],
-        boos: [
-          "Yell at ME — don't use your fists!",
-          "I get the anger! Use your voice, not your hands.",
-          "Come up with a fiery insult instead of a punch.",
-          "Let it out here — hitting never helps."
-        ],
-        schelden: [
-          "Don't hit! Cursing is fine — go for it!",
-          "Fists solve nothing — just rant it out!",
-          "Take revenge by cursing them out — come on!",
-          "Forget the hitting — a proper rant here is way better!"
-        ]
-      },
-      de: {
-        lief: [
-          "Hey, nicht. Atme ruhig und erzähl, was passiert ist.",
-          "Ich verstehe deine Wut, aber Hände weg. Was läuft?",
-          "Bleiben wir ruhig — erzähl, ich höre zu.",
-          "Keine Gewalt — schrei lieber mich an."
-        ],
-        boos: [
-          "Schrei MICH an — keine Fäuste!",
-          "Ich verstehe die Wut! Stimme, keine Hände.",
-          "Erfinde lieber ein flammendes Schimpfwort als einen Schlag.",
-          "Lass es hier raus — Schlagen hilft nie."
-        ],
-        schelden: [
-          "Nicht schlagen! Schimpfen ist okay — leg los!",
-          "Fäuste lösen nichts — schrei's lieber raus!",
-          "Räch dich durch Beschimpfen — komm schon!",
-          "Hau ab mit dem Schlagen — eine richtige Schimpftirade hier ist viel besser!"
-        ]
-      },
-      fr: {
-        lief: [
-          "Hé, ne fais pas ça. Respire et raconte-moi ce qui s'est passé.",
-          "Je comprends ta colère, mais pas les mains. Qu'est-ce qui se passe?",
-          "Gardons notre calme — raconte, je t'écoute.",
-          "Pas de violence — crie sur moi à la place si ça aide."
-        ],
-        boos: [
-          "Crie sur MOI — pas avec tes poings!",
-          "Je comprends la colère! Ta voix, pas tes mains.",
-          "Invente une insulte cinglante plutôt qu'un coup.",
-          "Lâche-toi ici — frapper n'aide jamais."
-        ],
-        schelden: [
-          "Pas de coup! Insulter, c'est okay — vas-y!",
-          "Les poings ne résolvent rien — sors-le verbalement!",
-          "Venge-toi en l'insultant à fond — allez!",
-          "Laisse tomber les coups — une bonne engueulade ici, c'est mille fois mieux!"
-        ]
-      }
-    };
-
-    function detectPerson(text, lang) {
-      if (!text) return null;
-      // 1) Familie-relatie via lowercase token-match
-      const relations = FAMILY_RELATIONS[lang] || FAMILY_RELATIONS.nl;
-      const tokens = text.toLowerCase().split(/[\s.,!?;:'"„""()\-—]+/).filter(Boolean);
-      for (const r of relations) {
-        if (tokens.includes(r)) return { type: "relation", word: r };
-      }
-      // 2) Eigennaam: hoofdletter-woord van 3+ chars dat geen veelvoorkomend woord is
-      const matches = [...text.matchAll(/([A-ZÀ-Ž][a-zà-ÿ]{2,})/g)];
-      for (const m of matches) {
-        const word = m[1];
-        if (!NAME_STOPWORDS.has(word.toLowerCase())) {
-          return { type: "name", word };
-        }
-      }
-      return null;
-    }
-
     const state = { mode: "lief", voice: "vrouw", language: "nl", theme: "light", voices: [] };
 
     function loadPrefs() {
@@ -1630,16 +1434,7 @@
         const pool = (violentIntentResponses[lang] || violentIntentResponses.nl)[mode];
         if (pool && pool.length) return pool[Math.floor(Math.random() * pool.length)];
       }
-      // 1) Persoon-vermelding heeft voorrang: vraag erover door
-      const person = detectPerson(userText || "", lang);
-      if (person) {
-        const pool = ((personResponses[lang] || {})[person.type] || {})[mode];
-        if (pool && pool.length) {
-          const tpl = pool[Math.floor(Math.random() * pool.length)];
-          return tpl.replace("{x}", person.word);
-        }
-      }
-      // 2) Thema-match
+      // 1) Thema-match
       const theme = detectTheme(userText || "", lang);
       if (theme) {
         const langTheme = (themedResponses[lang] || {})[theme];
@@ -1648,7 +1443,7 @@
           return arr[Math.floor(Math.random() * arr.length)];
         }
       }
-      // 3) Generieke willekeurige zin
+      // 2) Generieke willekeurige zin
       const langSet = responses[lang] || responses.nl;
       const arr = langSet[mode] || langSet.lief;
       return arr[Math.floor(Math.random() * arr.length)];
