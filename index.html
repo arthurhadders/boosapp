@@ -129,6 +129,57 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* Adem-overlay */
+    .breath-overlay {
+      position: fixed; inset: 0;
+      background: rgba(8, 12, 24, 0.85);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 28px;
+      z-index: 1000;
+      animation: fadeIn 0.6s ease-out;
+    }
+    .breath-overlay.open { display: flex; }
+    .breath-circle {
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 30%, #b8c8e8, #5d75b3 70%, #3a4d80);
+      box-shadow: 0 0 80px rgba(140, 165, 220, 0.5);
+      transform: scale(0.55);
+    }
+    .breath-overlay.open .breath-circle {
+      animation: breathe478 19s ease-in-out infinite;
+    }
+    @keyframes breathe478 {
+      0%, 100% { transform: scale(0.55); }
+      21%      { transform: scale(1.15); }
+      58%      { transform: scale(1.15); }
+    }
+    .breath-label {
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+      min-height: 2rem;
+      text-align: center;
+    }
+    .breath-hint {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.85rem;
+      margin-top: -16px;
+    }
+    .breath-close {
+      background: rgba(255, 255, 255, 0.12);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      padding: 10px 24px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    .breath-close:hover { background: rgba(255, 255, 255, 0.2); }
+
     /* Rustige modus: zachtere kleuren, tragere animaties */
     body[data-calm="true"] {
       --accent: #9bb1d6;
@@ -250,6 +301,7 @@
   <header>
     <h1>🫧 BoosApp</h1>
     <div class="header-actions">
+      <button class="theme-btn icon-only" id="breathBtn" title="Adem mee" aria-label="Adem mee">🫁</button>
       <button class="theme-btn icon-only" id="musicBtn" title="Muziek aan/uit">🔇</button>
       <button class="theme-btn" id="themeBtn">🌙 Donker</button>
     </div>
@@ -358,6 +410,13 @@
       </div>
     </div>
   </main>
+
+  <div class="breath-overlay" id="breathOverlay" role="dialog" aria-modal="true" aria-labelledby="breathLabel">
+    <div class="breath-circle" id="breathCircle"></div>
+    <div class="breath-label" id="breathLabel">Inadem...</div>
+    <div class="breath-hint" id="breathHint">4 — 7 — 8</div>
+    <button class="breath-close" id="breathClose" data-i18n="breath_close">Stop</button>
+  </div>
 
   <script>
     // Antwoorden per taal + mode — voeg hier gerust eigen zinnen aan toe!
@@ -1247,7 +1306,10 @@
         music_on_title: "Geluid uitzetten", music_off_title: "Geluid aanzetten",
         settings_calm_label: "Rustige modus",
         settings_sound_label: "Geluid",
-        sound_music: "Zachte muziek", sound_rain: "Regen", sound_sea: "Zee"
+        sound_music: "Zachte muziek", sound_rain: "Regen", sound_sea: "Zee",
+        breath_button_title: "Adem mee",
+        breath_inhale: "Inadem...", breath_hold: "Vasthouden...", breath_exhale: "Uitadem...",
+        breath_close: "Stop"
       },
       en: {
         theme_dark: "🌙 Dark", theme_light: "☀️ Light",
@@ -1275,7 +1337,10 @@
         music_on_title: "Turn sound off", music_off_title: "Turn sound on",
         settings_calm_label: "Calm mode",
         settings_sound_label: "Sound",
-        sound_music: "Soft music", sound_rain: "Rain", sound_sea: "Sea"
+        sound_music: "Soft music", sound_rain: "Rain", sound_sea: "Sea",
+        breath_button_title: "Breathe with me",
+        breath_inhale: "Breathe in...", breath_hold: "Hold...", breath_exhale: "Breathe out...",
+        breath_close: "Stop"
       },
       de: {
         theme_dark: "🌙 Dunkel", theme_light: "☀️ Hell",
@@ -1303,7 +1368,10 @@
         music_on_title: "Ton ausschalten", music_off_title: "Ton einschalten",
         settings_calm_label: "Ruhemodus",
         settings_sound_label: "Klang",
-        sound_music: "Sanfte Musik", sound_rain: "Regen", sound_sea: "Meer"
+        sound_music: "Sanfte Musik", sound_rain: "Regen", sound_sea: "Meer",
+        breath_button_title: "Atme mit",
+        breath_inhale: "Einatmen...", breath_hold: "Halten...", breath_exhale: "Ausatmen...",
+        breath_close: "Stopp"
       },
       fr: {
         theme_dark: "🌙 Sombre", theme_light: "☀️ Clair",
@@ -1331,7 +1399,10 @@
         music_on_title: "Couper le son", music_off_title: "Activer le son",
         settings_calm_label: "Mode calme",
         settings_sound_label: "Son",
-        sound_music: "Musique douce", sound_rain: "Pluie", sound_sea: "Mer"
+        sound_music: "Musique douce", sound_rain: "Pluie", sound_sea: "Mer",
+        breath_button_title: "Respire avec moi",
+        breath_inhale: "Inspire...", breath_hold: "Retiens...", breath_exhale: "Expire...",
+        breath_close: "Arrêter"
       }
     };
     let T = ui.nl;
@@ -1353,6 +1424,8 @@
       if (tb) tb.textContent = (state.theme === "light") ? T.theme_dark : T.theme_light;
       const musb = document.getElementById("musicBtn");
       if (musb) musb.title = musicOn ? T.music_on_title : T.music_off_title;
+      const brb = document.getElementById("breathBtn");
+      if (brb) { brb.title = T.breath_button_title; brb.setAttribute("aria-label", T.breath_button_title); }
       document.documentElement.lang = state.language;
       renderExamples();
       // Werk de model-labels in de provider-UI bij (afhankelijk van taal)
@@ -2006,6 +2079,41 @@
       };
       document.addEventListener("click", starter);
     }
+
+    // === Ademhalingscirkel (4-7-8) ===
+    let breathStart = 0;
+    let breathRunning = false;
+    function openBreathing() {
+      const overlay = $("breathOverlay");
+      overlay.classList.add("open");
+      breathStart = performance.now();
+      breathRunning = true;
+      tickBreath();
+    }
+    function closeBreathing() {
+      $("breathOverlay").classList.remove("open");
+      breathRunning = false;
+    }
+    function tickBreath() {
+      if (!breathRunning) return;
+      const t = ((performance.now() - breathStart) / 1000) % 19;
+      const label = $("breathLabel");
+      let txt;
+      if (t < 4)       txt = T.breath_inhale;
+      else if (t < 11) txt = T.breath_hold;
+      else             txt = T.breath_exhale;
+      label.textContent = txt;
+      requestAnimationFrame(tickBreath);
+    }
+    $("breathBtn").addEventListener("click", openBreathing);
+    $("breathClose").addEventListener("click", closeBreathing);
+    $("breathOverlay").addEventListener("click", (e) => {
+      // Klik buiten cirkel/labels/knop = sluiten
+      if (e.target.id === "breathOverlay") closeBreathing();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && breathRunning) closeBreathing();
+    });
 
     // Initiele UI-vertaling toepassen (na mic + muziek-setup zodat alles juiste taal krijgt)
     applyUI();
